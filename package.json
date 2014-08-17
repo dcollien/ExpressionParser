@@ -1,0 +1,31 @@
+{
+  "name": "expressionparser",
+  "version": "0.0.1",
+  "description": "Parse simple expressions, in a language of your own description",
+  "main": "ExpressionParser.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dcollien/ExpressionParser"
+  },
+  "keywords": [
+    "parser",
+    "expression",
+    "condition",
+    "boolean",
+    "arithmetic",
+    "rpn",
+    "reverse",
+    "polish",
+    "shunting",
+    "yard"
+  ],
+  "author": "David Collien",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/dcollien/ExpressionParser/issues"
+  },
+  "homepage": "https://github.com/dcollien/ExpressionParser"
+}
