@@ -24,18 +24,24 @@ The latter language can be configured as follows:
         },
         '/': function(a, b) {
           return a / b;
+        },
+        ',': function(a, b) {
+          return [a] + b;
         }
       },
       PREFIX_OPS: {
         'SQRT': function(expr) {
           return Math.sqrt(expr);
+        },
+        'POW': function(expr) {
+          return Math.pow(expr[0], expr[1]);
         }
       },
-      PRECEDENCE: [['SQRT'], ['*', '/'], ['+', '-']],
+      PRECEDENCE: [['SQRT', 'POW'], ['*', '/'], ['+', '-'], [',']],
       GROUP_OPEN: '(',
       GROUP_CLOSE: ')',
       SEPARATOR: ' ',
-      SYMBOLS: ['(', ')', '+', '-', '*', '/'],
+      SYMBOLS: ['(', ')', '+', '-', '*', '/', ','],
 
       termDelegate: function(term) {
         return parseInt(term);
@@ -43,10 +49,10 @@ The latter language can be configured as follows:
     };
 
 and evaluated as:
+    var expr = 'pow(1 + 1 * 2 - (10 / 2) + sqrt(16), 2)'.toUpperCase();
+    var result = new ExpressionParser(arithmeticLanguage).evaluateExpression(expr);
 
-    var result = new ExpressionParser(arithmeticLanguage).evaluateExpression('1 + 1 * 2 - (10 / 2) + SQRT 16');
-
-(which will result in 2)
+(which will result in 4)
 
 This uses the built-in tokeniser (which is very simple), but you can write your own tokeniser (e.g. for differentiating between prefix minus and infix minus) and pass the tokens into:
 

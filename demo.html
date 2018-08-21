@@ -39,33 +39,41 @@
         },
         '/': function(a, b) {
           return a / b;
+        },
+        ',': function(a, b) {
+          return [a] + b;
         }
       },
       PREFIX_OPS: {
         'SQRT': function(expr) {
           return Math.sqrt(expr);
+        },
+        'POW': function(expr) {
+          console.log(expr);
+          return Math.pow(expr[0], expr[1]);
         }
       },
-      PRECEDENCE: [['SQRT'], ['*', '/'], ['+', '-']],
+      PRECEDENCE: [['SQRT', 'POW'], ['*', '/'], ['+', '-'], [',']],
       GROUP_OPEN: '(',
       GROUP_CLOSE: ')',
       SEPARATOR: ' ',
-      SYMBOLS: ['(', ')', '+', '-', '*', '/'],
+      SYMBOLS: ['(', ')', '+', '-', '*', '/', ','],
 
       termDelegate: function(term) {
         return parseInt(term);
       }
     };
 
-    var expr = '1 + 1 * 2 - (10 / 2) + SQRT 16';
+    var expr = 'pow(1 + 1 * 2 - (10 / 2) + sqrt(16), 2)';
 
     parser = new ExpressionParser(arithmeticLanguage);
 
     console.log(expr);
+    expr = expr.toUpperCase();
     console.log(parser.expressionToRpn(expr));
     console.log(parser.rpnToExpression(parser.expressionToRpn(expr)));
     console.log(parser.evaluateExpression(expr));
-    assert(parser.evaluateExpression(expr) === 2);
+    assert(parser.evaluateExpression(expr) === 4);
 
     console.log("All Tests Passed!");
     </script>
