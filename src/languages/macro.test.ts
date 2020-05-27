@@ -8,7 +8,7 @@ const parser = init(macro, (term: string) => {
   if (term === "_TEST") {
     return 42;
   } else {
-    throw new Error("Invalid term");
+    throw new Error(`Invalid term: ${term}`);
   }
 });
 
@@ -29,7 +29,7 @@ describe("Infix Modular Arithmetic", () => {
     expect(result).to.equal(3);
   });
   it("should result in 4", () => {
-    const result = calc("16 MOD 12");
+    const result = calc("MOD(16, 12)");
     expect(result).to.equal(4);
   });
 });
@@ -48,7 +48,7 @@ describe("Simple Boolean Expression", () => {
 describe("Boolean Expression", () => {
   it("should result in true", () => {
     const result = calc(
-      "(1 = 1) AND (1 != 2) AND (1 <> 2) AND (1 < 2) AND (2 > 1) AND (1 <= 1) AND ((1 >= 1) OR FALSE)"
+      "(1 = 1) AND (1 != 2) AND (1 <> 2) AND (1 < 2) AND (2 > 1) AND (1 <= 1) AND ((1 >= 1) OR FALSE) AND (PI = PI)"
     );
     expect(result).to.equal(true);
   });
@@ -112,5 +112,37 @@ describe("Calls and Arrays", () => {
     const result = calc("SUM(SORT(REVERSE([1,2,2])))");
     expect(result).to.equal(5);
   });
+
+  it("should result in ABCDEFG", () => {
+    const result = calc("STRING(MAP(\"UPPER\", CHARARRAY(\"abcdefg\")))");
+    expect(result).to.equal("ABCDEFG");
+  });
+
+  it("should result in [true, false, true]", () => {
+    const result = calc("MAP(\"NOT\", [FALSE, TRUE, FALSE])");
+    expect(result).to.eql([true, false, true]);
+  });
+
+  it("should result in 6", () => {
+    const result = calc("REDUCE(\"ADD\", 0, [1, 2, 3])");
+    expect(result).to.equal(6);
+  });
+
+  it("should result in [ 97, 98, 99, 100, 101, 102, 103 ]", () => {
+    const result = calc("MAP(\"CODE\", CHARARRAY(\"abcdefg\"))");
+    expect(result).to.eql([ 97, 98, 99, 100, 101, 102, 103 ]);
+  })
+
+  it("should result in 700", () => {
+    const result = calc("REDUCE(\"+\", 0, MAP(\"CODE\", CHARARRAY(\"abcdefg\")))");
+    expect(result).to.equal(700);
+  });
+
+  it("should throw error", () => {
+    expect(() => {
+      calc("REDUCE(\"_TEST_\", 0, [1, 2, 3])");
+    }).to.throw('Unknown function: _TEST_');
+  });
 });
 
+// TODO: IFTHENELSE / RANGE, Math funcs

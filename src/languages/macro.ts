@@ -6,6 +6,7 @@ import {
   ExpressionValue,
   ExpressionArray,
   isArgumentsArray,
+  ArgumentsArray,
 } from "../ExpressionParser";
 
 export interface FunctionOps {
@@ -14,17 +15,16 @@ export interface FunctionOps {
 
 const unpackArgs = (f: Delegate) => (expr: ExpressionThunk) => {
   const result = expr();
-  const err = new Error("Incorrect number of arguments.");
 
   if (!isArgumentsArray(result)) {
     if (f.length > 1) {
-      throw err;
+      throw new Error(`Too few arguments. ${JSON.stringify(result)}`);
     }
     return f(() => result);
   } else if (result.length === f.length || f.length === 0) {
     return f.apply(null, result);
   } else {
-    throw err;
+    throw new Error(`Incorrect number of arguments. Expected ${f.length}`);
   }
 };
 
@@ -94,21 +94,18 @@ const char = (result: ExpressionValue) => {
   return result;
 };
 
-type Callable = (expr: ExpressionValue) => ExpressionValue;
+type Callable = (...args: ExpressionArray<ExpressionThunk>) => ExpressionValue;
 
 export const macro = function (termDelegate: TermDelegate) {
   const call = (name: string): Callable => {
     const upperName = name.toUpperCase();
     if (prefixOps.hasOwnProperty(upperName)) {
-      return (expr) => prefixOps[upperName](() => expr);
-    } else if (infixOps.hasOwnProperty(upperName)) {
-      return (expr) => {
-        const [arg1, arg2] = argsArray(expr);
-        return infixOps[upperName](
-          () => arg1,
-          () => arg2
-        );
+      return (...args) => {
+        args.isArgumentsArray = true;
+        return prefixOps[upperName](() => args);
       };
+    } else if (infixOps.hasOwnProperty(upperName)) {
+      return (...args) => infixOps[upperName](args[0], args[1]);
     } else {
       throw new Error(`Unknown function: ${name}`);
     }
@@ -119,16 +116,15 @@ export const macro = function (termDelegate: TermDelegate) {
     "-": (a, b) => num(a()) - num(b()),
     "*": (a, b) => num(a()) * num(b()),
     "/": (a, b) => num(a()) / num(b()),
-    ",": (a, b) => {
+    ",": (a, b): ArgumentsArray => {
       const aVal = a();
       const aArr: ExpressionArray<ExpressionValue> = isArgumentsArray(aVal)
         ? aVal
         : [() => aVal];
       const args: ExpressionArray<ExpressionValue> = aArr.concat([b]);
       args.isArgumentsArray = true;
-      return args;
+      return args as ArgumentsArray;
     },
-    MOD: (a, b) => num(a()) % num(b()),
     "%": (a, b) => num(a()) % num(b()),
     "=": (a, b) => a() === b(),
     "!=": (a, b) => a() !== b(),
@@ -143,7 +139,11 @@ export const macro = function (termDelegate: TermDelegate) {
   };
 
   const prefixOps: FunctionOps = {
-    NEG: (arg) => -num(arg()),
+    ADD: (a, b) => num(a()) + num(b()),
+    SUB: (a, b) => num(a()) - num(b()),
+    MUL: (a, b) => num(a()) * num(b()),
+    DIV: (a, b) => num(a()) / num(b()),
+    MOD: (a, b) => num(a()) % num(b()),
     ISPRIME: (arg) => {
       const val = num(arg());
       for (let i = 2, s = Math.sqrt(val); i <= s; i++) {
@@ -266,19 +266,22 @@ export const macro = function (termDelegate: TermDelegate) {
     },
     ARRAY: (arg) => {
       const val = arg();
-      return isArgumentsArray(val) ? val.slice() : [array(val)];
+      return isArgumentsArray(val) ? val.slice() : [val];
     },
     ISNAN: (arg) => isNaN(num(arg())),
     MAP: (arg1, arg2) => {
       const name = string(arg1());
       const arr = evalArray(arg2());
-      return arr.map((val) => call(name)(val));
+      return arr.map((val) => call(name)(() => val));
     },
     REDUCE: (arg1, arg2, arg3) => {
       const name = string(arg1());
       const start = arg2();
       const arr = evalArray(arg3());
-      return arr.reduce((prev, curr) => call(name)([prev, curr]), start);
+      return arr.reduce((prev, curr) => {
+        const args: ExpressionArray<ExpressionThunk> = [() => prev, () => curr];
+        return call(name)(...args);
+      }, start);
     },
     RANGE: (arg1, arg2) => {
       const start = num(arg1());
