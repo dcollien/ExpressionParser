@@ -42,29 +42,159 @@
         },
         ',': function(a, b) {
           return [a] + b;
+        },
+        'MOD': function(a, b) {
+          return a % b;
+        },
+        '%': function(a, b) {
+          return a % b;
+        },
+        '=': function(a, b) {
+          return a === b;
+        },
+        '!=': function(a, b) {
+          return a !== b;
+        },
+        '<>': function(a, b) {
+          return a !== b;
+        },
+        '>': function(a, b) {
+          return a > b;
+        },
+        '<': function(a, b) {
+          return a < b;
+        },
+        '>=': function(a, b) {
+          return a >= b;
+        },
+        '<=': function(a, b) {
+          return a <= b;
+        },
+        'AND': function(a, b) {
+          return a && b;
+        },
+        'OR': function(a, b) {
+          return a || b;
+        },
+        '^': function(a, b) {
+          return Math.pow(a, b);
         }
       },
       PREFIX_OPS: {
-        'SQRT': function(expr) {
-          return Math.sqrt(expr);
+        'ISPRIME': function(expr) {
+          for (var i = 2, s = Math.sqrt(expr); i <= s; i++)
+            if (expr % i === 0) return false; 
+              return expr !== 1;
         },
-        'POW': function(expr) {
-          console.log(expr);
-          return Math.pow(expr[0], expr[1]);
-        }
+        'GCD': function(expr) {
+          var a = Math.abs(expr[0]);
+          var b = Math.abs(expr[1]);
+          if (b > a) {var temp = a; a = b; b = temp;}
+          while (true) {
+              if (b == 0) return a;
+              a %= b;
+              if (a == 0) return b;
+              b %= a;
+          }
+        },
+        'NOT': function(expr) {
+          return !expr;
+        },
+        'ABS': Math.abs,
+        'ACOS': Math.acos,
+        'ACOSH': Math.acosh,
+        'ASIN': Math.asin,
+        'ASINH': Math.asinh,
+        'ATAN': Math.atan,
+        'ATAN2': function(expr) {
+          return Math.atan2(expr[0], expr[1])
+        },
+        'ATANH': Math.atanh,
+        'CUBEROOT': Math.cbrt,
+        'CEIL': Math.ceil,
+        'COS': Math.cos,
+        'COSH': Math.cos,
+        'EXP': Math.exp,
+        'FLOOR': Math.floor,
+        'LN': Math.log,
+        'LOG': Math.log10,
+        'LOG2': Math.log2,
+        'MAX': Math.max,
+        'MIN': Math.min,
+        'SIN': Math.sin,
+        'SINH': Math.sinh,
+        'SQRT': Math.sqrt,
+        'TAN': Math.tan,
+        'TANH': Math.tanh,
+        'ROUND': Math.round,
+        'SIGN': Math.sign,
+        'TRUNC': Math.trunc
       },
-      PRECEDENCE: [['SQRT', 'POW'], ['*', '/'], ['+', '-'], [',']],
+      PRECEDENCE: [
+        [
+          'ISPRIME', 'GCD', 'NOT',
+          'ABS',
+          'ACOS',
+          'ACOSH',
+          'ASIN',
+          'ASINH',
+          'ATAN',
+          'ATAN2',
+          'ATANH',
+          'CUBEROOT',
+          'CEIL',
+          'COS',
+          'COSH',
+          'EXP',
+          'FLOOR',
+          'LN',
+          'LOG',
+          'LOG2',
+          'MAX',
+          'MIN',
+          'SIN',
+          'SINH',
+          'SQRT',
+          'TAN',
+          'TANH',
+          'ROUND',
+          'SIGN',
+          'TRUNC'
+        ],
+        ['^'],
+        ['*', '/', '%', 'MOD'],
+        ['+', '-'],
+        ['<', '>', '<=', '>='],
+        ['=', '!=', '<>'],
+        ['AND', 'OR'],
+        [',']
+      ],
       GROUP_OPEN: '(',
       GROUP_CLOSE: ')',
       SEPARATOR: ' ',
-      SYMBOLS: ['(', ')', '+', '-', '*', '/', ','],
+      SYMBOLS: ['(', ')', '+', '-', '*', '/', ',', '^', '<', '>', '='],
 
       termDelegate: function(term) {
-        return parseInt(term);
+        const numVal = parseFloat(term);
+        if (Number.isNaN(numVal)) {
+          switch(term) {
+            case 'E': return Math.E;
+            case 'LN2': return Math.LN2;
+            case 'LN10': return Math.LN10;
+            case 'LOG2E': return Math.LOG2E;
+            case 'LOG10E': return Math.LOG10E;
+            case 'PI': return Math.PI;
+            case 'SQRTHALF': return Math.SQRT1_2;
+            case 'SQRT2': return Math.SQRT2;
+            default: return parseFloat(prompt(term))
+          }
+        } else {
+          return numVal;
+        }
       }
     };
 
-    var expr = 'pow(1 + 1 * 2 - (10 / 2) + sqrt(16), 2)';
+    var expr = '(1 + 1 * 2 - (10 / 2) + sqrt(16))^2';
 
     parser = new ExpressionParser(arithmeticLanguage);
 
@@ -76,6 +206,12 @@
     assert(parser.evaluateExpression(expr) === 4);
 
     console.log("All Tests Passed!");
+
+    while (expr = prompt("Expression")) {
+      expr = expr.toUpperCase();
+      console.log(parser.rpnToExpression(parser.expressionToRpn(expr)));
+      alert(parser.evaluateExpression(expr));
+    }
     </script>
   </body>
 </html>

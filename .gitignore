@@ -1,2 +1,5 @@
 
 .vscode/settings.json
+.nyc_output
+coverage
+node_modules
