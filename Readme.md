@@ -8,7 +8,6 @@ or
 
     1 + 1 * 2 - (10 / 2) + SQRT 16
 
-
 The latter language can be configured as follows:
 
     var arithmeticLanguage = {
@@ -54,11 +53,19 @@ and evaluated as:
 
 (which will result in 4)
 
+## Built-in Languages
+
+A built-in language called "formula" is provided as the default.
+
+## Tokeniser
+
 This uses the built-in tokeniser (which is very simple), but you can write your own tokeniser (e.g. for differentiating between prefix minus and infix minus) and pass the tokens into:
 
     var result = new ExpressionParser(arithmeticLanguage).evaluateTokens(['1', '+', '1']);
 
 (which will also result in 2)
+
+## RPN
 
 This parser will also convert between an expression and a Reverse Polish Notation (RPN) list:
 
@@ -69,10 +76,10 @@ This parser will also convert between an expression and a Reverse Polish Notatio
     parser.rpnToExpression(rpnList); // returns expression string
     parser.rpnToTokens(rpnList); // returns expression token list
 
+## Further configuration
 
 The SEPARATOR and SYMBOLS options are to assist the built-in tokeniser and expression string builder. By default terms used to define operators are words, separated by the SEPARATOR character. Those in the SYMBOLS list are not affected by the SEPARATOR.
 
 e.g. If '!' is in SYMBOLS, with space as the SEPARATOR, we can use "!A" instead of "! A"
 
 The termDelegate option is used to evaluate the terminal symbols in the parse tree (i.e. the values).
-

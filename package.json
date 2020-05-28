@@ -1,10 +1,12 @@
 {
   "name": "expressionparser",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Parse simple expressions, in a language of your own description",
-  "main": "ExpressionParser.js",
+  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "test": "mocha -r ts-node/register src/**/*.test.ts",
+    "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" npm run test"
   },
   "repository": {
     "type": "git",
@@ -27,5 +29,14 @@
   "bugs": {
     "url": "https://github.com/dcollien/ExpressionParser/issues"
   },
-  "homepage": "https://github.com/dcollien/ExpressionParser"
+  "homepage": "https://github.com/dcollien/ExpressionParser",
+  "devDependencies": {
+    "@types/chai": "^4.2.11",
+    "@types/mocha": "^7.0.2",
+    "chai": "^4.2.0",
+    "mocha": "^7.2.0",
+    "nyc": "^15.0.1",
+    "ts-node": "^8.10.1",
+    "typescript": "^3.9.3"
+  }
 }
