@@ -395,16 +395,46 @@ export const formula = function (termDelegate: TermDelegate): ExpressionParserOp
         text: "Performs addition: a + b",
       },
       {
+        op: "ADD",
+        fix: "prefix",
+        sig: ["a: Number", "b: Number", "Number"],
+        text: "Performs addition: ADD(a, b) = a + b",
+      },
+      {
+        op: "*",
+        fix: "infix",
+        sig: ["a: Number", "b: Number", "Number"],
+        text: "Performs multiplication: a * b",
+      },
+      {
+        op: "MUL",
+        fix: "prefix",
+        sig: ["a: Number", "b: Number", "Number"],
+        text: "Performs multiplication: MUL(a, b) = a * b",
+      },
+      {
         op: "-",
         fix: "infix",
         sig: ["a: Number", "b: Number", "Number"],
         text: "Performs subtraction: a - b",
       },
       {
+        op: "SUB",
+        fix: "prefix",
+        sig: ["a: Number", "b: Number", "Number"],
+        text: "Performs subtraction: SUB(a, b) = a - b",
+      },
+      {
         op: "/",
         fix: "infix",
         sig: ["a: Number", "b: Number", "Number"],
         text: "Performs division: a / b",
+      },
+      {
+        op: "DIV",
+        fix: "prefix",
+        sig: ["a: Number", "b: Number", "Number"],
+        text: "Performs division: DIV(a, b) = a / b",
       },
       {
         op: ",",
@@ -415,15 +445,15 @@ export const formula = function (termDelegate: TermDelegate): ExpressionParserOp
       },
       {
         op: "MOD",
-        fix: "infix",
+        fix: "prefix",
         sig: ["a: Number", "b: Number", "Number"],
-        text: "Performs modulo operation: a MOD b. (equivalent to %)",
+        text: "Performs modulo operation: MOD(a, b). (equivalent to a % b)",
       },
       {
         op: "%",
         fix: "infix",
         sig: ["a: Number", "b: Number", "Number"],
-        text: "Performs modulo operation: a % b. (equivalent to MOD)",
+        text: "Performs modulo operation: a % b. (equivalent to MOD(a, b))",
       },
       {
         op: "=",
@@ -444,6 +474,13 @@ export const formula = function (termDelegate: TermDelegate): ExpressionParserOp
         sig: ["a: Number", "b: Number", "Number"],
         text:
           "Returns FALSE if a = b. Otherwise returns TRUE. (equivalent to !=)",
+      },
+      {
+        op: "~=",
+        fix: "infix",
+        sig: ["a: Number", "b: Number", "Number"],
+        text:
+          "Returns TRUE if ABS(a - b) < EPSILON. Otherwise returns FALSE.",
       },
       {
         op: ">",

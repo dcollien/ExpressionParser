@@ -5,15 +5,40 @@
 `(a: Number + b: Number): Number`
 Performs addition: a + b
 
+## ADD
+
+`ADD(a: Number, b: Number): Number`
+Performs addition: ADD(a, b) = a + b
+
+## *
+
+`(a: Number * b: Number): Number`
+Performs multiplication: a * b
+
+## MUL
+
+`MUL(a: Number, b: Number): Number`
+Performs multiplication: MUL(a, b) = a * b
+
 ## -
 
 `(a: Number - b: Number): Number`
 Performs subtraction: a - b
 
+## SUB
+
+`SUB(a: Number, b: Number): Number`
+Performs subtraction: SUB(a, b) = a - b
+
 ## /
 
 `(a: Number / b: Number): Number`
 Performs division: a / b
+
+## DIV
+
+`DIV(a: Number, b: Number): Number`
+Performs division: DIV(a, b) = a / b
 
 ## ,
 
@@ -22,13 +47,13 @@ Returns an array of arguments with b appended to a. If a is not an argument arra
 
 ## MOD
 
-`(a: Number MOD b: Number): Number`
-Performs modulo operation: a MOD b. (equivalent to %)
+`MOD(a: Number, b: Number): Number`
+Performs modulo operation: MOD(a, b). (equivalent to a % b)
 
 ## %
 
 `(a: Number % b: Number): Number`
-Performs modulo operation: a % b. (equivalent to MOD)
+Performs modulo operation: a % b. (equivalent to MOD(a, b))
 
 ## =
 
@@ -44,6 +69,11 @@ Returns FALSE if a = b. Otherwise returns TRUE. (equivalent to <>)
 
 `(a: Number <> b: Number): Number`
 Returns FALSE if a = b. Otherwise returns TRUE. (equivalent to !=)
+
+## ~=
+
+`(a: Number ~= b: Number): Number`
+Returns TRUE if ABS(a - b) < EPSILON. Otherwise returns FALSE.
 
 ## >
 
