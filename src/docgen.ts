@@ -58,6 +58,7 @@ const generateDocs = (language: ExpressionParserOptions) => {
 ## ${op.op}
 
 \`${sigDoc}\`
+
 ${op.text}`;
       })
       .join("\n") +
