@@ -4,7 +4,8 @@
     "target": "es2016",
     "jsx": "preserve",
     "sourceMap": true,
-    "noImplicitAny": true
+    "noImplicitAny": true,
+    "outDir": "./build"
   },
   "exclude": [
     "node_modules",

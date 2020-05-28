@@ -18,7 +18,11 @@ const unpackArgs = (f: Delegate) => (expr: ExpressionThunk) => {
 
   if (!isArgumentsArray(result)) {
     if (f.length > 1) {
-      throw new Error(`Too few arguments. ${JSON.stringify(result)}`);
+      throw new Error(
+        `Too few arguments. Expected ${f.length}, found 1 (${JSON.stringify(
+          result
+        )})`
+      );
     }
     return f(() => result);
   } else if (result.length === f.length || f.length === 0) {
@@ -58,18 +62,6 @@ const evalArray = (arr: ExpressionValue) => {
   });
 };
 
-const argsArray = (result: ExpressionValue) => {
-  if (!Array.isArray(result)) {
-    throw new Error(`Expected arguments, found: ${typeof result}`);
-  }
-
-  if (!result.isArgumentsArray) {
-    throw new Error(`Expected arguments, found: array`);
-  }
-
-  return result;
-};
-
 const iterable = (result: ExpressionValue) => {
   if (!Array.isArray(result) && typeof result !== "string") {
     throw new Error(`Expected array or string, found: ${typeof result}`);
@@ -88,7 +80,7 @@ const string = (result: ExpressionValue) => {
 
 const char = (result: ExpressionValue) => {
   if (typeof result !== "string" || result.length !== 1) {
-    throw new Error(`Expected string, found: ${typeof result}`);
+    throw new Error(`Expected char, found: ${typeof result}`);
   }
 
   return result;
@@ -96,7 +88,7 @@ const char = (result: ExpressionValue) => {
 
 type Callable = (...args: ExpressionArray<ExpressionThunk>) => ExpressionValue;
 
-export const macro = function (termDelegate: TermDelegate) {
+export const formula = function (termDelegate: TermDelegate) {
   const call = (name: string): Callable => {
     const upperName = name.toUpperCase();
     if (prefixOps.hasOwnProperty(upperName)) {
@@ -129,6 +121,7 @@ export const macro = function (termDelegate: TermDelegate) {
     "=": (a, b) => a() === b(),
     "!=": (a, b) => a() !== b(),
     "<>": (a, b) => a() !== b(),
+    "~=": (a, b) => Math.abs(num(a()) - num(b())) < Number.EPSILON,
     ">": (a, b) => a() > b(),
     "<": (a, b) => a() < b(),
     ">=": (a, b) => a() >= b(),
@@ -139,6 +132,7 @@ export const macro = function (termDelegate: TermDelegate) {
   };
 
   const prefixOps: FunctionOps = {
+    NEG: (arg) => -num(arg()),
     ADD: (a, b) => num(a()) + num(b()),
     SUB: (a, b) => num(a()) - num(b()),
     MUL: (a, b) => num(a()) * num(b()),
@@ -206,10 +200,8 @@ export const macro = function (termDelegate: TermDelegate) {
 
       if (condition()) {
         return thenStatement();
-      } else if (elseStatement) {
-        return elseStatement();
       } else {
-        return null;
+        return elseStatement();
       }
     },
 
@@ -230,6 +222,8 @@ export const macro = function (termDelegate: TermDelegate) {
 
     DEC2BIN: (arg) => arg().toString(2),
     DEC2HEX: (arg) => arg().toString(16),
+    BIN2DEC: (arg) => Number.parseInt(string(arg()), 2),
+    HEX2DEC: (arg) => Number.parseInt(string(arg()), 16),
     DEGREES: (arg) => (num(arg()) * 180) / Math.PI,
     RADIANS: (arg) => (num(arg()) * Math.PI) / 180,
 
@@ -285,7 +279,7 @@ export const macro = function (termDelegate: TermDelegate) {
     },
     RANGE: (arg1, arg2) => {
       const start = num(arg1());
-      const limit = arg2();
+      const limit = num(arg2());
       const result = [];
       for (let i = start; i < limit; i++) {
         result.push(i);
@@ -314,7 +308,7 @@ export const macro = function (termDelegate: TermDelegate) {
       ["*", "/", "%", "MOD"],
       ["+", "-"],
       ["<", ">", "<=", ">="],
-      ["=", "!=", "<>"],
+      ["=", "!=", "<>", "~="],
       ["AND", "OR"],
       [","],
     ],
@@ -340,6 +334,7 @@ export const macro = function (termDelegate: TermDelegate) {
       ")",
       "[",
       "]",
+      "~",
     ],
     AMBIGUOUS: {
       "-": "NEG",
@@ -377,6 +372,10 @@ export const macro = function (termDelegate: TermDelegate) {
             return true;
           case "EMPTY":
             return [];
+          case "INFINITY":
+            return Number.POSITIVE_INFINITY;
+          case "EPSILON":
+            return Number.EPSILON;
           default:
             return termDelegate(term);
         }
@@ -776,9 +775,23 @@ export const macro = function (termDelegate: TermDelegate) {
       {
         op: "DEC2HEX",
         fix: "prefix",
-        sig: ["decimal: Integer", "binary: String"],
+        sig: ["decimal: Integer", "hex: String"],
         text:
           "Returns a string of characters representing the hexadecimal representation of the decimal value. DEC2HEX(decimal)",
+      },
+      {
+        op: "BIN2DEC",
+        fix: "prefix",
+        sig: ["binary: String", "decimal: Integer"],
+        text:
+          'Returns the base 10 value of a binary string of "1" and "0" characters. BIN2DEC(binary)',
+      },
+      {
+        op: "HEX2DEC",
+        fix: "prefix",
+        sig: ["hex: String", "decimal: Integer"],
+        text:
+          "Returns the base 10 value of a hexadecimal string. HEX2DEC(hex)",
       },
       {
         op: "SORT",
@@ -835,7 +848,7 @@ export const macro = function (termDelegate: TermDelegate) {
         op: "ARRAY",
         fix: "prefix",
         sig: ["arguments...", "Array"],
-        text: "Converts argments into an array: ARRAY(a, b, c, ...).",
+        text: "Converts arguments into an array: ARRAY(a, b, c, ...).",
       },
       {
         op: "MAP",

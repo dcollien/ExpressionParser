@@ -274,11 +274,9 @@ class ExpressionParser {
       if (currChar === this.options.ESCAPE_CHAR && !state.escaping) {
         state.escaping = true;
         continue;
-      } else {
-        state.escaping = false;
-      }
-
-      if (currChar === this.options.LITERAL_OPEN && !state.scanningLiteral) {
+      } else if (state.escaping) {
+        token += currChar;
+      } else if (currChar === this.options.LITERAL_OPEN && !state.scanningLiteral) {
         state.scanningLiteral = true;
         endWord(false);
       } else if (currChar === this.options.LITERAL_CLOSE) {
@@ -302,6 +300,13 @@ class ExpressionParser {
         state.startedWithSep = currChar === this.options.GROUP_OPEN;
         tokens.push(currChar);
       } else if (
+        currChar in this.surroundingOpen ||
+        currChar in this.surroundingClose
+      ) {
+        endWord(currChar in this.surroundingClose);
+        state.startedWithSep = (currChar in this.surroundingOpen);
+        tokens.push(currChar);
+      } else if (
         (this.isSymbol(currChar) && !state.scanningSymbols) ||
         (!this.isSymbol(currChar) && state.scanningSymbols)
       ) {
@@ -311,6 +316,8 @@ class ExpressionParser {
       } else {
         token += currChar;
       }
+
+      state.escaping = false;
     }
 
     return tokens;

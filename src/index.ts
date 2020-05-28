@@ -1,12 +1,10 @@
 import ExpressionParser, {
-  PrefixOps,
   TermDelegate,
-  ExpressionParserOptions,
-  InfixOps,
+  ExpressionParserOptions
 } from "./ExpressionParser";
-import { macro } from "./languages/macro";
+import { formula } from "./languages/formula";
 
-export { ExpressionParser, macro };
+export { ExpressionParser, formula };
 
 export const init = (
   language: (termDelegate: TermDelegate) => ExpressionParserOptions,
