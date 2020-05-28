@@ -10,6 +10,16 @@ A built-in language called "formula" is provided as the default.
 
     import { init, formula } from 'expressionparser'
 
+    const parser = init(formula, (term: string) => {
+      if (term === "MY_VARIABLE") {
+        return 42;
+      } else {
+        throw new Error(`Invalid term: ${term}`);
+      }
+    });
+
+    parser.expressionToValue("(1 + 1) + 40 = MY_VARIABLE"); // true
+
 ## Custom Language
 
 Parse simple expressions, in a language of your own description, such as:
