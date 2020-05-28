@@ -2,8 +2,10 @@
   "name": "expressionparser",
   "version": "1.0.0",
   "description": "Parse simple expressions, in a language of your own description",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
+    "prepublish": "tsc",
     "build": "tsc",
     "test": "mocha -r ts-node/register src/**/*.test.ts",
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" npm run test"

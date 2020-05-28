@@ -1,5 +1,17 @@
 # Expression Parser
 
+## Install
+
+`npm install expressionparser`
+
+## Built-in Languages
+
+A built-in language called "formula" is provided as the default.
+
+    import { init, formula } from 'expressionparser'
+
+## Custom Language
+
 Parse simple expressions, in a language of your own description, such as:
 
     (A AND B) OR NOT (C OR D)
@@ -10,7 +22,7 @@ or
 
 The latter language can be configured as follows:
 
-    var arithmeticLanguage = {
+    const arithmeticLanguage = {
       INFIX_OPS: {
         '+': function(a, b) {
           return a + b;
@@ -48,20 +60,16 @@ The latter language can be configured as follows:
     };
 
 and evaluated as:
-    var expr = 'pow(1 + 1 * 2 - (10 / 2) + sqrt(16), 2)'.toUpperCase();
-    var result = new ExpressionParser(arithmeticLanguage).evaluateExpression(expr);
+    const expr = 'pow(1 + 1 * 2 - (10 / 2) + sqrt(16), 2)'.toUpperCase();
+    const result = new ExpressionParser(arithmeticLanguage).evaluateExpression(expr);
 
 (which will result in 4)
-
-## Built-in Languages
-
-A built-in language called "formula" is provided as the default.
 
 ## Tokeniser
 
 This uses the built-in tokeniser (which is very simple), but you can write your own tokeniser (e.g. for differentiating between prefix minus and infix minus) and pass the tokens into:
 
-    var result = new ExpressionParser(arithmeticLanguage).evaluateTokens(['1', '+', '1']);
+    const result = new ExpressionParser(arithmeticLanguage).evaluateTokens(['1', '+', '1']);
 
 (which will also result in 2)
 
@@ -69,7 +77,7 @@ This uses the built-in tokeniser (which is very simple), but you can write your 
 
 This parser will also convert between an expression and a Reverse Polish Notation (RPN) list:
 
-    var parser = new ExpressionParser();
+    const parser = new ExpressionParser();
 
     parser.expressionToRpn(expr); // returns RPN list
     parser.tokensToRpn(exprTokenList); // returns RPN list

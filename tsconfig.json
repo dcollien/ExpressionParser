@@ -5,7 +5,8 @@
     "jsx": "preserve",
     "sourceMap": true,
     "noImplicitAny": true,
-    "outDir": "./build"
+    "outDir": "./dist",
+    "declaration": true
   },
   "exclude": [
     "node_modules",
