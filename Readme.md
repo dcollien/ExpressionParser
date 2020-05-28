@@ -6,7 +6,9 @@
 
 ## Built-in Languages
 
-A built-in language called "formula" is provided as the default.
+A built-in language called ["formula"](src/languages/formula.md) is provided as the default.
+
+Evaluating an expression:
 
     import { init, formula } from 'expressionparser'
 

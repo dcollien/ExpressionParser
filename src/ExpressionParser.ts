@@ -46,8 +46,7 @@ export interface ArgumentsArray extends ExpressionArray<ExpressionThunk> {
 
 export const isArgumentsArray = (
   args: ExpressionValue
-): args is ArgumentsArray =>
-  Array.isArray(args) && args.isArgumentsArray;
+): args is ArgumentsArray => Array.isArray(args) && args.isArgumentsArray;
 
 export type ValuePrimitive = number | boolean | string;
 export type ExpressionValue =
@@ -103,6 +102,13 @@ export interface InfixOps {
   [op: string]: InfixOp;
 }
 
+export interface Description {
+  op: string;
+  fix: "infix" | "prefix" | "surround";
+  sig: string[];
+  text: string;
+};
+
 export interface ExpressionParserOptions {
   AMBIGUOUS: {
     [op: string]: string;
@@ -126,6 +132,7 @@ export interface ExpressionParserOptions {
   };
 
   isCaseInsensitive?: boolean;
+  descriptions?: Description[];
 }
 
 class ExpressionParser {
@@ -276,7 +283,10 @@ class ExpressionParser {
         continue;
       } else if (state.escaping) {
         token += currChar;
-      } else if (currChar === this.options.LITERAL_OPEN && !state.scanningLiteral) {
+      } else if (
+        currChar === this.options.LITERAL_OPEN &&
+        !state.scanningLiteral
+      ) {
         state.scanningLiteral = true;
         endWord(false);
       } else if (currChar === this.options.LITERAL_CLOSE) {
@@ -304,7 +314,7 @@ class ExpressionParser {
         currChar in this.surroundingClose
       ) {
         endWord(currChar in this.surroundingClose);
-        state.startedWithSep = (currChar in this.surroundingOpen);
+        state.startedWithSep = currChar in this.surroundingOpen;
         tokens.push(currChar);
       } else if (
         (this.isSymbol(currChar) && !state.scanningSymbols) ||

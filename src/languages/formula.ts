@@ -7,6 +7,7 @@ import {
   ExpressionArray,
   isArgumentsArray,
   ArgumentsArray,
+  ExpressionParserOptions,
 } from "../ExpressionParser";
 
 export interface FunctionOps {
@@ -88,7 +89,7 @@ const char = (result: ExpressionValue) => {
 
 type Callable = (...args: ExpressionArray<ExpressionThunk>) => ExpressionValue;
 
-export const formula = function (termDelegate: TermDelegate) {
+export const formula = function (termDelegate: TermDelegate): ExpressionParserOptions {
   const call = (name: string): Callable => {
     const upperName = name.toUpperCase();
     if (prefixOps.hasOwnProperty(upperName)) {
@@ -447,37 +448,37 @@ export const formula = function (termDelegate: TermDelegate) {
       {
         op: ">",
         fix: "infix",
-        sig: ["a: Number", "b: Number", "Boolen"],
+        sig: ["a: Number", "b: Number", "Boolean"],
         text: "Performs greater-than operation: a > b",
       },
       {
         op: "<",
         fix: "infix",
-        sig: ["a: Number", "b: Number", "Boolen"],
+        sig: ["a: Number", "b: Number", "Boolean"],
         text: "Performs less-than operation: a < b",
       },
       {
         op: ">=",
         fix: "infix",
-        sig: ["a: Number", "b: Number", "Boolen"],
+        sig: ["a: Number", "b: Number", "Boolean"],
         text: "Performs greater-than-or-equal operation: a >= b",
       },
       {
         op: "<=",
         fix: "infix",
-        sig: ["a: Number", "b: Number", "Boolen"],
+        sig: ["a: Number", "b: Number", "Boolean"],
         text: "Performs less-than-or-equal operation: a <= b",
       },
       {
         op: "AND",
         fix: "infix",
-        sig: ["a: Boolean", "b: Boolean", "Boolen"],
+        sig: ["a: Boolean", "b: Boolean", "Boolean"],
         text: "Performs logical AND: a AND b.",
       },
       {
         op: "OR",
         fix: "infix",
-        sig: ["a: Boolean", "b: Boolean", "Boolen"],
+        sig: ["a: Boolean", "b: Boolean", "Boolean"],
         text: "Performs logical OR: a OR b.",
       },
       {
