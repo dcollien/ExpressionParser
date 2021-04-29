@@ -63,7 +63,7 @@ export type Delegate = (...args: ExpressionValue[]) => ExpressionValue;
 
 type Infixer<T> = (token: string, lhs: T, rhs: T) => T;
 type Prefixer<T> = (token: string, rhs: T) => T;
-type Terminator<T> = (token: string) => T;
+type Terminator<T> = (token: string, terms?: Record<string, ExpressionValue>) => T;
 
 const thunkEvaluator = (val: ExpressionValue) => evaluate(val);
 const objEvaluator = mapValues<ExpressionValue, ExpressionValue>(
@@ -466,7 +466,8 @@ class ExpressionParser {
     stack: string[],
     infixer: Infixer<T>,
     prefixer: Prefixer<T>,
-    terminator: Terminator<T>
+    terminator: Terminator<T>,
+    terms?: Record<string, ExpressionValue>
   ): T {
     let lhs, rhs;
 
@@ -483,16 +484,16 @@ class ExpressionParser {
     const isPrefix = prefixDelegate && stack.length > 0;
 
     if (isInfix || isPrefix) {
-      rhs = this.evaluateRpn<T>(stack, infixer, prefixer, terminator);
+      rhs = this.evaluateRpn<T>(stack, infixer, prefixer, terminator, terms);
     }
 
     if (isInfix) {
-      lhs = this.evaluateRpn<T>(stack, infixer, prefixer, terminator);
+      lhs = this.evaluateRpn<T>(stack, infixer, prefixer, terminator, terms);
       return infixer(token, lhs, rhs);
     } else if (isPrefix) {
       return prefixer(token, rhs);
     } else {
-      return terminator(token);
+      return terminator(token, terms);
     }
   }
 
@@ -531,12 +532,12 @@ class ExpressionParser {
     return this.evaluateRpn(stack, infixExpr, prefixExpr, termExpr);
   }
 
-  rpnToThunk(stack: string[]) {
+  rpnToThunk(stack: string[], terms?: Record<string, ExpressionValue>) {
     const infixExpr: Infixer<ExpressionThunk> = (term, lhs, rhs) =>
       thunk(this.getInfixOp(term), lhs, rhs);
     const prefixExpr: Prefixer<ExpressionThunk> = (term, rhs) =>
       thunk(this.getPrefixOp(term), rhs);
-    const termExpr: Terminator<ExpressionThunk> = (term) => {
+    const termExpr: Terminator<ExpressionThunk> = (term, terms) => {
       if (
         this.options.LITERAL_OPEN &&
         term.startsWith(this.options.LITERAL_OPEN)
@@ -547,15 +548,15 @@ class ExpressionParser {
             .replace(this.LIT_OPEN_REGEX, "")
             .replace(this.LIT_CLOSE_REGEX, "");
       } else {
-        return thunk(this.options.termDelegate, term);
+        return (terms && terms[term]) ? (() => terms[term]) : thunk(this.options.termDelegate, term);
       }
     };
 
-    return this.evaluateRpn(stack, infixExpr, prefixExpr, termExpr);
+    return this.evaluateRpn(stack, infixExpr, prefixExpr, termExpr, terms);
   }
 
-  rpnToValue(stack: string[]): ExpressionValue {
-    return evaluate(this.rpnToThunk(stack));
+  rpnToValue(stack: string[], terms?: Record<string, ExpressionValue>): ExpressionValue {
+    return evaluate(this.rpnToThunk(stack, terms));
   }
 
   thunkToValue(thunk: ExpressionThunk) {
@@ -566,12 +567,12 @@ class ExpressionParser {
     return this.tokensToRpn(this.tokenize(expression));
   }
 
-  expressionToThunk(expression: string) {
-    return this.rpnToThunk(this.expressionToRpn(expression));
+  expressionToThunk(expression: string, terms?: Record<string, ExpressionValue>) {
+    return this.rpnToThunk(this.expressionToRpn(expression), terms);
   }
 
-  expressionToValue(expression: string) {
-    return this.rpnToValue(this.expressionToRpn(expression));
+  expressionToValue(expression: string, terms?: Record<string, ExpressionValue>) {
+    return this.rpnToValue(this.expressionToRpn(expression), terms);
   }
 
   tokensToValue(tokens: string[]) {

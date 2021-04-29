@@ -2,6 +2,7 @@ import "mocha";
 import { expect } from "chai";
 
 import { init, formula } from "../index";
+import { ExpressionValue } from "../ExpressionParser";
 
 const termVals: { [key:string]: number | ((...args: any) => any) } = {
   'a': 12,
@@ -29,8 +30,8 @@ const parser = init(formula, (term: string) => {
   }
 });
 
-const calc = (expression: string) => {
-  return parser.expressionToValue(expression);
+const calc = (expression: string, terms?: Record<string, ExpressionValue>) => {
+  return parser.expressionToValue(expression, terms);
 };
 
 describe("Infix Simple Arithmetic", () => {
@@ -63,6 +64,13 @@ describe("External Function", () => {
     const result = calc("xadd(1,1)");
     expect(result).to.equal(2);
   })
+});
+
+describe("Additional Terms", () => {
+  it("should result in 3", () => {
+    const result = calc("x + y", { x: 1, y: 2 });
+    expect(result).to.equal(3);
+  });
 });
 
 describe("Simple Boolean Expression", () => {
