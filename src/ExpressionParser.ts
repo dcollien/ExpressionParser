@@ -57,6 +57,8 @@ export type ExpressionValue =
   | ExpressionThunk;
 export type ExpressionThunk = () => ExpressionValue;
 export type TermDelegate = (term: string) => ExpressionValue;
+export type TermType = "number" | "boolean" | "string" | "function" | "array" | "object" | "unknown";
+export type TermTyper = (term: string) => TermType;
 export type Delegate = (...args: ExpressionValue[]) => ExpressionValue;
 
 type Infixer<T> = (token: string, lhs: T, rhs: T) => T;
@@ -124,6 +126,7 @@ export interface ExpressionParserOptions {
   PRECEDENCE: string[][];
   SEPARATOR: string;
   termDelegate: TermDelegate;
+  termTyper?: TermTyper;
   SURROUNDING?: {
     [token: string]: {
       OPEN: string;
@@ -218,6 +221,22 @@ class ExpressionParser {
   }
 
   getPrefixOp(op: string) {
+    if (this.options.termTyper && this.options.termTyper(op) === "function") {
+      const termValue = this.options.termDelegate(op);
+
+      if (typeof termValue !== "function") {
+        throw new Error(`${op} is not a function.`);
+      }
+      const result: (...args: any) => ExpressionValue = termValue;
+
+      return (argsThunk: ExpressionThunk | ExpressionValue) => {
+        const args = evaluate(argsThunk);
+        if (!Array.isArray(args)) {
+          throw new Error("Unable to accept arguments for function.");
+        }
+        return () => result(...args);
+      };
+    }
     return this.options.PREFIX_OPS[this.resolveCase(op)];
   }
 
@@ -227,6 +246,10 @@ class ExpressionParser {
 
   getPrecedence(op: string) {
     let i, len, casedOp;
+
+    if (this.options.termTyper && this.options.termTyper(op) === "function") {
+      return 0;
+    }
 
     casedOp = this.resolveCase(op);
 

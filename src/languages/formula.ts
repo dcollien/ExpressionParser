@@ -8,6 +8,8 @@ import {
   isArgumentsArray,
   ArgumentsArray,
   ExpressionParserOptions,
+  TermTyper,
+  TermType,
 } from "../ExpressionParser";
 
 export interface FunctionOps {
@@ -89,7 +91,7 @@ const char = (result: ExpressionValue) => {
 
 type Callable = (...args: ExpressionArray<ExpressionThunk>) => ExpressionValue;
 
-export const formula = function (termDelegate: TermDelegate): ExpressionParserOptions {
+export const formula = function (termDelegate: TermDelegate, termTypeDelegate?: TermTyper): ExpressionParserOptions {
   const call = (name: string): Callable => {
     const upperName = name.toUpperCase();
     if (prefixOps.hasOwnProperty(upperName)) {
@@ -382,6 +384,45 @@ export const formula = function (termDelegate: TermDelegate): ExpressionParserOp
         }
       } else {
         return numVal;
+      }
+    },
+
+    termTyper: function (term: string): TermType {
+      const numVal = parseFloat(term);
+      
+      if (Number.isNaN(numVal)) {
+        switch (term) {
+          case "E":
+            return "number";
+          case "LN2":
+            return "number";
+          case "LN10":
+            return "number";
+          case "LOG2E":
+            return "number";
+          case "LOG10E":
+            return "number";
+          case "PI":
+            return "number";
+          case "SQRTHALF":
+            return "number";
+          case "SQRT2":
+            return "number";
+          case "FALSE":
+            return "boolean";
+          case "TRUE":
+            return "boolean";
+          case "EMPTY":
+            return "array";
+          case "INFINITY":
+            return "number";
+          case "EPSILON":
+            return "number";
+          default:
+            return termTypeDelegate ? termTypeDelegate(term) : "unknown";
+        }
+      } else {
+        return "number";
       }
     },
 

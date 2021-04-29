@@ -1,15 +1,17 @@
 import ExpressionParser, {
   TermDelegate,
-  ExpressionParserOptions
+  ExpressionParserOptions,
+  TermTyper
 } from "./ExpressionParser";
 import { formula } from "./languages/formula";
 
 export { ExpressionParser, formula };
 
 export const init = (
-  language: (termDelegate: TermDelegate) => ExpressionParserOptions,
-  evalTerm: TermDelegate
+  language: (termDelegate: TermDelegate, termTypeDelegate?: TermTyper) => ExpressionParserOptions,
+  evalTerm: TermDelegate,
+  typeTerm?: TermTyper
 ) => {
-  const defn = language(evalTerm);
+  const defn = language(evalTerm, typeTerm);
   return new ExpressionParser(defn);
 };

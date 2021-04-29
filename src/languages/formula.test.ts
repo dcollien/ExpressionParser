@@ -3,11 +3,29 @@ import { expect } from "chai";
 
 import { init, formula } from "../index";
 
+const termVals: { [key:string]: number | ((...args: any) => any) } = {
+  'a': 12,
+  'b': 9,
+  'c': -3,
+  _TEST: 42,
+  'xadd': (a, b) => a + b
+};
+
+const termTypes: { [key: string]: "number" | "function" } = {
+  'xadd': "function"
+};
+
 const parser = init(formula, (term: string) => {
-  if (term === "_TEST") {
-    return 42;
+  if (term in termVals) {
+    return termVals[term];
   } else {
     throw new Error(`Invalid term: ${term}`);
+  }
+}, (term: string) => {
+  if (term in termTypes) {
+    return termTypes[term];
+  } else {
+    return "number";
   }
 });
 
@@ -31,6 +49,20 @@ describe("Infix Modular Arithmetic", () => {
     const result = calc("MOD(16, 12)");
     expect(result).to.equal(4);
   });
+});
+
+describe("Quadratic Formula", () => {
+  it("should result in -1", () => {
+    const result = calc("(-b - sqrt(b^2 - 4 * a * c))/(2 * a)");
+    expect(result).to.equal(-1);
+  })
+});
+
+describe("External Function", () => {
+  it("should result in 2", () => {
+    const result = calc("xadd(1,1)");
+    expect(result).to.equal(2);
+  })
 });
 
 describe("Simple Boolean Expression", () => {
