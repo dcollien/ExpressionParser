@@ -267,17 +267,27 @@ export const formula = function (termDelegate: TermDelegate, termTypeDelegate?: 
     },
     ISNAN: (arg) => isNaN(num(arg())),
     MAP: (arg1, arg2) => {
-      const name = string(arg1());
+      const func = arg1();
       const arr = evalArray(arg2());
-      return arr.map((val) => call(name)(() => val));
+      return arr.map((val) => {
+        if (typeof func === "function") {
+          return () => func(val);
+        } else {
+          return call(string(func))(() => val)
+        }
+      });
     },
     REDUCE: (arg1, arg2, arg3) => {
-      const name = string(arg1());
+      const func = arg1();
       const start = arg2();
       const arr = evalArray(arg3());
       return arr.reduce((prev, curr) => {
         const args: ExpressionArray<ExpressionThunk> = [() => prev, () => curr];
-        return call(name)(...args);
+        if (typeof func === "function") {
+          return func(...args);
+        } else {
+          return call(string(func))(...args);
+        }
       }, start);
     },
     RANGE: (arg1, arg2) => {

@@ -71,6 +71,11 @@ describe("External Function", () => {
     const result = calc("xneg(-2)");
     expect(result).to.equal(2);
   });
+
+  it("should result in [1, 2]", () => {
+    const result = calc("map(xneg, [-1, -2])");
+    expect(result).to.eql([1, 2]);
+  });
 });
 
 describe("Additional Terms", () => {

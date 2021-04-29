@@ -49,17 +49,19 @@ export const isArgumentsArray = (
 ): args is ArgumentsArray => Array.isArray(args) && args.isArgumentsArray;
 
 export type ValuePrimitive = number | boolean | string;
+export type Delegate = (...args: ExpressionValue[]) => ExpressionValue;
+export type ExpressionFunction = Delegate;
 export type ExpressionValue =
   | ValuePrimitive
   | ArgumentsArray
   | ExpressionArray<ExpressionValue>
   | { [key: string]: ExpressionValue }
-  | ExpressionThunk;
+  | ExpressionThunk
+  | ExpressionFunction;
 export type ExpressionThunk = () => ExpressionValue;
 export type TermDelegate = (term: string) => ExpressionValue;
 export type TermType = "number" | "boolean" | "string" | "function" | "array" | "object" | "unknown";
 export type TermTyper = (term: string) => TermType;
-export type Delegate = (...args: ExpressionValue[]) => ExpressionValue;
 
 type Infixer<T> = (token: string, lhs: T, rhs: T) => T;
 type Prefixer<T> = (token: string, rhs: T) => T;
