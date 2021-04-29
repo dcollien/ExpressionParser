@@ -232,9 +232,10 @@ class ExpressionParser {
       return (argsThunk: ExpressionThunk | ExpressionValue) => {
         const args = evaluate(argsThunk);
         if (!Array.isArray(args)) {
-          throw new Error("Unable to accept arguments for function.");
+          return () => result(args);
+        } else {
+          return () => result(...args);
         }
-        return () => result(...args);
       };
     }
     return this.options.PREFIX_OPS[this.resolveCase(op)];

@@ -9,11 +9,13 @@ const termVals: { [key:string]: number | ((...args: any) => any) } = {
   'b': 9,
   'c': -3,
   _TEST: 42,
-  'xadd': (a, b) => a + b
+  'xadd': (a, b) => a + b,
+  'xneg': (x) => -x,
 };
 
 const termTypes: { [key: string]: "number" | "function" } = {
-  'xadd': "function"
+  'xadd': "function",
+  'xneg': "function"
 };
 
 const parser = init(formula, (term: string) => {
@@ -63,7 +65,12 @@ describe("External Function", () => {
   it("should result in 2", () => {
     const result = calc("xadd(1,1)");
     expect(result).to.equal(2);
-  })
+  });
+
+  it("should result in 2", () => {
+    const result = calc("xneg(-2)");
+    expect(result).to.equal(2);
+  });
 });
 
 describe("Additional Terms", () => {
