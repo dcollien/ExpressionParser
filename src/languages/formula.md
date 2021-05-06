@@ -428,9 +428,9 @@ Returns a reversed array: REVERSE(array).
 
 ## INDEX
 
-`INDEX(array: Array): Array`
+`INDEX(array: Array, i: Integer): Value`
 
-Returns a reversed array: REVERSE(array).
+Returns the value at the given array index: INDEX(array, i).
 
 ## LENGTH
 
@@ -485,6 +485,120 @@ Performs a reducer function on each pair of array elements, using "start" as its
 `RANGE(start: Integer, limit: Integer): Array`
 
 Creates an array of integers, incrementing from start (included) to the limit (excluded): RANGE(start, limit)
+
+## ZIP
+
+`ZIP(array1: Array, array2: Array): Array of [array1[i], array2[i]]`
+
+Combines two arrays into a single array of both values, paired at their respective position: ZIP(array1, array2)
+
+## UNZIP
+
+`UNZIP(array: Array of [a, b]): [Array of a, Array of b]`
+
+Splits a single array of pairs into two arrays with values at their respective positions: UNZIP(array)
+
+## TAKE
+
+`TAKE(n: Integer): Array`
+
+Takes the first n values from the array: TAKE(n, array)
+
+## DROP
+
+`DROP(n: Integer): Array`
+
+Drops the first n values from the array: DROP(n, array)
+
+## SLICE
+
+`SLICE(startIndex: Integer, limitIndex: Integer): Array`
+
+Slices an array from startIndex to (but not including) limitIndex: SLICE(startIndex, limitIndex, array)
+
+## CONCAT
+
+`CONCAT(array1: Array, array2: Array): Array`
+
+Concatenates two arrays into one: CONCAT(array1, array2)
+
+## HEAD
+
+`HEAD(array: Array): Value`
+
+Retrieves the first element of an array: HEAD(array)
+
+## TAIL
+
+`TAIL(array: Array): Array`
+
+Returns the array without the first element: TAIL(array)
+
+## LAST
+
+`LAST(array: Array): Value`
+
+Retrieves the last element of an array: HEAD(array)
+
+## CONS
+
+`CONS(head: Value, array: Array): Array`
+
+Returns an array with a new value at the first position: CONS(head, array)
+
+## FILTER
+
+`FILTER(filter: Reference, array: Array): Array`
+
+Returns an array of all elements for which 'filter(element)' returns true: FILTER(filter, array).
+
+## TAKEWHILE
+
+`TAKEWHILE(check: Reference, array: Array): Array`
+
+Returns a new array of all elements up until 'check(element)' returns false: TAKEWHILE(check, array).
+
+## DROPWHILE
+
+`DROPWHILE(check: Reference, array: Array): Array`
+
+Returns a new array skipping all elements up until 'check(element)' returns false: DROPWHILE(check, array).
+
+## GET
+
+`GET(key: String, dict: Dictionary): Value`
+
+Retrieves the value of the associated key in a dictionary: GET(key, dict)
+
+## PUT
+
+`PUT(key: String, value: Value, dict: Dictionary): Dictionary`
+
+Returns a dictionary with the key set to a new value: PUT(key, value, dict)
+
+## DICT
+
+`DICT(keys: Array, values: Array): Dictionary`
+
+Constructs a new dictionary out of an array of keys and a corresponding array of values: DICT(keys, values)
+
+## UNZIPDICT
+
+`UNZIPDICT(keyValuePairs: Array): Dictionary`
+
+Constructs a new dictionary out of an array of [key, value] pairs: UNZIPDICT(keyValuePairs)
+
+## KEYS
+
+`KEYS(dict: Dictionary): Array`
+
+Returns all the keys of a dictionary in alphabetical order: KEYS(dict)
+
+## VALUES
+
+`VALUES(dict: Dictionary): Array`
+
+Returns all the values of a dictionary, in alphabetical order of their keys: VALUES(dict)
 
 ## [...]
 

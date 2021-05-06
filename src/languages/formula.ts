@@ -1,3 +1,4 @@
+import { type } from "os";
 import {
   Delegate,
   ExpressionThunk,
@@ -55,14 +56,71 @@ const array = (result: ExpressionValue) => {
   return result;
 };
 
-const evalArray = (arr: ExpressionValue) => {
+const bool = (value: ExpressionValue) => {
+  if (typeof value !== "boolean") {
+    throw new Error(`Expected boolean, found: ${typeof value}`);
+  }
+
+  return value;
+};
+
+const evalBool = (value: ExpressionValue): boolean => {
+  let result;
+
+  while (typeof value === "function" && value.length === 0) {
+    result = value();
+  }
+
+  if (!result) {
+    result = value;
+  }
+
+  return bool(result);
+};
+
+const evalString = (value: ExpressionValue) => {
+  let result;
+  if (typeof value === "function" && value.length === 0) {
+    result = value();
+  } else {
+    result = value;
+  }
+
+  return string(result);
+};
+
+const evalArray = (
+  arr: ExpressionValue,
+  typeCheck?: (value: ExpressionValue) => ExpressionValue
+) => {
   return array(arr).map((value) => {
+    let result;
     if (typeof value === "function" && value.length === 0) {
-      return value();
+      result = value();
     } else {
-      return value;
+      result = value;
     }
+
+    if (typeCheck) {
+      try {
+        result = typeCheck(result);
+      } catch (err) {
+        throw new Error(`In array; ${err.message}`);
+      }
+    }
+
+    return result;
   });
+};
+
+const obj = (obj: ExpressionValue) => {
+  if (typeof obj !== "object" || obj === null) {
+    throw new Error(`Expected object, found: ${typeof obj}`);
+  } else if (Array.isArray(obj)) {
+    throw new Error(`Expected object, found array`);
+  }
+
+  return obj;
 };
 
 const iterable = (result: ExpressionValue) => {
@@ -91,7 +149,10 @@ const char = (result: ExpressionValue) => {
 
 type Callable = (...args: ExpressionArray<ExpressionThunk>) => ExpressionValue;
 
-export const formula = function (termDelegate: TermDelegate, termTypeDelegate?: TermTyper): ExpressionParserOptions {
+export const formula = function (
+  termDelegate: TermDelegate,
+  termTypeDelegate?: TermTyper
+): ExpressionParserOptions {
   const call = (name: string): Callable => {
     const upperName = name.toUpperCase();
     if (prefixOps.hasOwnProperty(upperName)) {
@@ -219,7 +280,7 @@ export const formula = function (termDelegate: TermDelegate, termTypeDelegate?: 
     },
 
     SUM: (arg) =>
-      evalArray(arg()).reduce((prev: number, curr) => prev + num(curr), 0),
+      evalArray(arg(), num).reduce((prev: number, curr) => prev + num(curr), 0),
     CHAR: (arg) => String.fromCharCode(num(arg())),
     CODE: (arg) => char(arg()).charCodeAt(0),
 
@@ -250,7 +311,7 @@ export const formula = function (termDelegate: TermDelegate, termTypeDelegate?: 
       arr.reverse();
       return arr;
     },
-    INDEX: (arg1, arg2) => iterable(arg2())[num(arg1())],
+    INDEX: (arg1, arg2) => iterable(arg1())[num(arg2())],
     LENGTH: (arg) => {
       return iterable(arg()).length;
     },
@@ -273,7 +334,7 @@ export const formula = function (termDelegate: TermDelegate, termTypeDelegate?: 
         if (typeof func === "function") {
           return () => func(val);
         } else {
-          return call(string(func))(() => val)
+          return call(string(func))(() => val);
         }
       });
     },
@@ -301,6 +362,182 @@ export const formula = function (termDelegate: TermDelegate, termTypeDelegate?: 
     },
     UPPER: (arg) => string(arg()).toUpperCase(),
     LOWER: (arg) => string(arg()).toLowerCase(),
+
+    ZIP: (arg1, arg2) => {
+      const arr1 = evalArray(arg1());
+      const arr2 = evalArray(arg2());
+
+      if (arr1.length !== arr2.length) {
+        throw new Error("ZIP: Arrays are of different lengths");
+      } else {
+        return arr1.map((v1, i) => [v1, arr2[i]]);
+      }
+    },
+    UNZIP: (arg1) => {
+      const inputArr = evalArray(arg1());
+      const arr1 = inputArr.map((item) => array(item)[0]);
+      const arr2 = inputArr.map((item) => array(item)[1]);
+      return [
+        arr1,
+        arr2
+      ];
+    },
+    TAKE: (arg1, arg2) => {
+      const n = num(arg1());
+      const arr = evalArray(arg2());
+      return arr.slice(0, n);
+    },
+    DROP: (arg1, arg2) => {
+      const n = num(arg1());
+      const arr = evalArray(arg2());
+      return arr.slice(n);
+    },
+    SLICE: (arg1, arg2, arg3) => {
+      const start = num(arg1());
+      const limit = num(arg2());
+      const arr = evalArray(arg3());
+      return arr.slice(start, limit);
+    },
+    CONCAT: (arg1, arg2) => {
+      const arr1 = array(arg1());
+      const arr2 = array(arg2());
+      return arr1.concat(arr2);
+    },
+    HEAD: (arg1) => {
+      const arr = array(arg1());
+      return arr[0];
+    },
+    TAIL: (arg1) => {
+      const arr = array(arg1());
+      return arr.slice(1);
+    },
+    LAST: (arg1) => {
+      const arr = array(arg1());
+      return arr[arr.length-1];
+    },
+    CONS: (arg1, arg2) => {
+      const head = arg1();
+      const arr = array(arg2());
+      return [head].concat(arr);
+    },
+    FILTER: (arg1, arg2) => {
+      const func = arg1();
+      const arr = evalArray(arg2());
+      const result: ExpressionArray<ExpressionValue> = [];
+      arr.forEach((val) => {
+        let isSatisfied;
+        if (typeof func === "function") {
+          isSatisfied = evalBool(func(val));
+        } else {
+          isSatisfied = evalBool(call(string(func))(() => val));
+        }
+
+        if (isSatisfied) {
+          result.push(val);
+        }
+      });
+
+      return result;
+    },
+    TAKEWHILE: (arg1, arg2) => {
+      const func = arg1();
+      const arr = evalArray(arg2());
+
+      const satisfaction = (val: ExpressionValue) => {
+        let isSatisfied;
+        if (typeof func === "function") {
+          isSatisfied = evalBool(func(val));
+        } else {
+          isSatisfied = evalBool(call(string(func))(() => val));
+        }
+
+        return isSatisfied;
+      };
+
+      let i = 0;
+      while (satisfaction(arr[i]) && i < arr.length) {
+        i++;
+      }
+
+      return arr.slice(0, i);
+    },
+    DROPWHILE: (arg1, arg2) => {
+      const func = arg1();
+      const arr = evalArray(arg2());
+
+      const satisfaction = (val: ExpressionValue) => {
+        let isSatisfied;
+        if (typeof func === "function") {
+          isSatisfied = evalBool(func(val));
+        } else {
+          isSatisfied = evalBool(call(string(func))(() => val));
+        }
+
+        return isSatisfied;
+      };
+
+      let i = 0;
+      while (satisfaction(arr[i]) && i < arr.length) {
+        i++;
+      }
+
+      return arr.slice(i);
+    },
+
+    GET: (arg1, arg2) => {
+      const key = string(arg1());
+      const inputObj = obj(arg2());
+
+      return inputObj[key];
+    },
+    PUT: (arg1, arg2, arg3) => {
+      const key = string(arg1());
+      const value = arg2();
+      const inputObj = obj(arg3());
+
+      return Object.assign({}, inputObj, { [key]: value });
+    },
+    DICT: (arg1, arg2) => {
+      const arr1 = evalArray(arg1());
+      const arr2 = evalArray(arg2());
+      const result: { [key: string]: ExpressionValue } = {};
+
+      arr1.forEach((v1, i) => {
+        const key = string(v1);
+        result[key] = arr2[i];
+      });
+
+      return result;
+    },
+    UNZIPDICT: (arg1) => {
+      const arr = evalArray(arg1());
+      const result: { [key: string]: ExpressionValue } = {};
+
+      arr.forEach((item) => {
+        const kvPair = array(item);
+        if (kvPair.length !== 2) {
+          throw new Error(`UNZIPDICT: Expected sub-array of length 2`);
+        }
+
+        const [key, value] = kvPair;
+
+        try {
+          result[evalString(key)] = value;
+        } catch(err) {
+          throw new Error(`UNZIPDICT keys; ${err.message}`);
+        }
+      });
+
+      return result;
+    },
+    KEYS: (arg1) => {
+      const inputObj = obj(arg1());
+      return Object.keys(inputObj).sort();
+    },
+    VALUES: (arg1) => {
+      const inputObj = obj(arg1());
+      return Object.keys(inputObj).sort().map((key) => inputObj[key]);
+    }
   };
 
   // Ensure arguments are unpacked accordingly
@@ -385,6 +622,8 @@ export const formula = function (termDelegate: TermDelegate, termTypeDelegate?: 
             return true;
           case "EMPTY":
             return [];
+          case "EMPTYDICT":
+            return {};
           case "INFINITY":
             return Number.POSITIVE_INFINITY;
           case "EPSILON":
@@ -399,7 +638,7 @@ export const formula = function (termDelegate: TermDelegate, termTypeDelegate?: 
 
     termTyper: function (term: string): TermType {
       const numVal = parseFloat(term);
-      
+
       if (Number.isNaN(numVal)) {
         switch (term) {
           case "E":
@@ -530,8 +769,7 @@ export const formula = function (termDelegate: TermDelegate, termTypeDelegate?: 
         op: "~=",
         fix: "infix",
         sig: ["a: Number", "b: Number", "Number"],
-        text:
-          "Returns TRUE if ABS(a - b) < EPSILON. Otherwise returns FALSE.",
+        text: "Returns TRUE if ABS(a - b) < EPSILON. Otherwise returns FALSE.",
       },
       {
         op: ">",
@@ -879,8 +1117,7 @@ export const formula = function (termDelegate: TermDelegate, termTypeDelegate?: 
         op: "HEX2DEC",
         fix: "prefix",
         sig: ["hex: String", "decimal: Integer"],
-        text:
-          "Returns the base 10 value of a hexadecimal string. HEX2DEC(hex)",
+        text: "Returns the base 10 value of a hexadecimal string. HEX2DEC(hex)",
       },
       {
         op: "SORT",
@@ -897,8 +1134,8 @@ export const formula = function (termDelegate: TermDelegate, termTypeDelegate?: 
       {
         op: "INDEX",
         fix: "prefix",
-        sig: ["array: Array", "Array"],
-        text: "Returns a reversed array: REVERSE(array).",
+        sig: ["array: Array", "i: Integer", "Value"],
+        text: "Returns the value at the given array index: INDEX(array, i).",
       },
       {
         op: "LENGTH",
@@ -959,6 +1196,139 @@ export const formula = function (termDelegate: TermDelegate, termTypeDelegate?: 
         sig: ["start: Integer", "limit: Integer", "Array"],
         text:
           "Creates an array of integers, incrementing from start (included) to the limit (excluded): RANGE(start, limit)",
+      },
+      {
+        op: "ZIP",
+        fix: "prefix",
+        sig: ["array1: Array", "array2: Array", "Array of [array1[i], array2[i]]"],
+        text:
+          "Combines two arrays into a single array of both values, paired at their respective position: ZIP(array1, array2)",
+      },
+      {
+        op: "UNZIP",
+        fix: "prefix",
+        sig: ["array: Array of [a, b]", "[Array of a, Array of b]"],
+        text:
+          "Splits a single array of pairs into two arrays with values at their respective positions: UNZIP(array)",
+      },
+      {
+        op: "TAKE",
+        fix: "prefix",
+        sig: ["n: Integer", "Array"],
+        text:
+          "Takes the first n values from the array: TAKE(n, array)",
+      },
+      {
+        op: "DROP",
+        fix: "prefix",
+        sig: ["n: Integer", "Array"],
+        text:
+          "Drops the first n values from the array: DROP(n, array)",
+      },
+      {
+        op: "SLICE",
+        fix: "prefix",
+        sig: ["startIndex: Integer", "limitIndex: Integer", "Array"],
+        text:
+          "Slices an array from startIndex to (but not including) limitIndex: SLICE(startIndex, limitIndex, array)",
+      },
+      {
+        op: "CONCAT",
+        fix: "prefix",
+        sig: ["array1: Array", "array2: Array", "Array"],
+        text:
+          "Concatenates two arrays into one: CONCAT(array1, array2)",
+      },
+      {
+        op: "HEAD",
+        fix: "prefix",
+        sig: ["array: Array", "Value"],
+        text:
+          "Retrieves the first element of an array: HEAD(array)",
+      },
+      {
+        op: "TAIL",
+        fix: "prefix",
+        sig: ["array: Array", "Array"],
+        text:
+          "Returns the array without the first element: TAIL(array)",
+      },
+      {
+        op: "LAST",
+        fix: "prefix",
+        sig: ["array: Array", "Value"],
+        text:
+          "Retrieves the last element of an array: HEAD(array)",
+      },
+      {
+        op: "CONS",
+        fix: "prefix",
+        sig: ["head: Value", "array: Array", "Array"],
+        text:
+          "Returns an array with a new value at the first position: CONS(head, array)",
+      },
+      {
+        op: "FILTER",
+        fix: "prefix",
+        sig: ["filter: Reference", "array: Array", "Array"],
+        text:
+          "Returns an array of all elements for which 'filter(element)' returns true: FILTER(filter, array).",
+      },
+      {
+        op: "TAKEWHILE",
+        fix: "prefix",
+        sig: ["check: Reference", "array: Array", "Array"],
+        text:
+          "Returns a new array of all elements up until 'check(element)' returns false: TAKEWHILE(check, array).",
+      },
+      {
+        op: "DROPWHILE",
+        fix: "prefix",
+        sig: ["check: Reference", "array: Array", "Array"],
+        text:
+          "Returns a new array skipping all elements up until 'check(element)' returns false: DROPWHILE(check, array).",
+      },
+      {
+        op: "GET",
+        fix: "prefix",
+        sig: ["key: String", "dict: Dictionary", "Value"],
+        text:
+          "Retrieves the value of the associated key in a dictionary: GET(key, dict)",
+      },
+      {
+        op: "PUT",
+        fix: "prefix",
+        sig: ["key: String", "value: Value", "dict: Dictionary", "Dictionary"],
+        text:
+          "Returns a dictionary with the key set to a new value: PUT(key, value, dict)",
+      },
+      {
+        op: "DICT",
+        fix: "prefix",
+        sig: ["keys: Array", "values: Array", "Dictionary"],
+        text:
+          "Constructs a new dictionary out of an array of keys and a corresponding array of values: DICT(keys, values)",
+      },
+      {
+        op: "UNZIPDICT",
+        fix: "prefix",
+        sig: ["keyValuePairs: Array", "Dictionary"],
+        text:
+          "Constructs a new dictionary out of an array of [key, value] pairs: UNZIPDICT(keyValuePairs)",
+      },
+      {
+        op: "KEYS",
+        fix: "prefix",
+        sig: ["dict: Dictionary", "Array"],
+        text:
+          "Returns all the keys of a dictionary in alphabetical order: KEYS(dict)",
+      },
+      {
+        op: "VALUES",
+        fix: "prefix",
+        sig: ["dict: Dictionary", "Array"],
+        text:
+          "Returns all the values of a dictionary, in alphabetical order of their keys: VALUES(dict)",
       },
       {
         op: "[...]",
