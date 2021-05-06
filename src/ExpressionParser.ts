@@ -551,7 +551,7 @@ class ExpressionParser {
             .replace(this.LIT_OPEN_REGEX, "")
             .replace(this.LIT_CLOSE_REGEX, "");
       } else {
-        return (terms && terms[term] !== undefined) ? (() => terms[term]) : thunk(this.options.termDelegate, term);
+        return (terms && term in terms) ? (() => terms[term]) : thunk(this.options.termDelegate, term);
       }
     };
 

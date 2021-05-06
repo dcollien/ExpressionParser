@@ -85,6 +85,11 @@ describe("Additional Terms", () => {
     const result = calc("x + y", { x: 1, y: 2 });
     expect(result).to.equal(3);
   });
+
+  it("should result in true", () => {
+    const result = calc("x = UNDEFINED", { x: undefined });
+    expect(result).to.equal(true);
+  });
 });
 
 describe("Simple Boolean Expression", () => {

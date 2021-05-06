@@ -38,7 +38,7 @@ const unpackArgs = (f: Delegate) => (expr: ExpressionThunk) => {
 
 const num = (result: ExpressionValue) => {
   if (typeof result !== "number") {
-    throw new Error(`Expected number, found: ${typeof result}`);
+    throw new Error(`Expected number, found: ${typeof result} ${JSON.stringify(result)}`);
   }
 
   return result;
@@ -46,7 +46,7 @@ const num = (result: ExpressionValue) => {
 
 const array = (result: ExpressionValue) => {
   if (!Array.isArray(result)) {
-    throw new Error(`Expected array, found: ${typeof result}`);
+    throw new Error(`Expected array, found: ${typeof result} ${JSON.stringify(result)}`);
   }
 
   if (isArgumentsArray(result)) {
@@ -58,7 +58,7 @@ const array = (result: ExpressionValue) => {
 
 const bool = (value: ExpressionValue) => {
   if (typeof value !== "boolean") {
-    throw new Error(`Expected boolean, found: ${typeof value}`);
+    throw new Error(`Expected boolean, found: ${typeof value} ${JSON.stringify(value)}`);
   }
 
   return value;
@@ -115,7 +115,7 @@ const evalArray = (
 
 const obj = (obj: ExpressionValue) => {
   if (typeof obj !== "object" || obj === null) {
-    throw new Error(`Expected object, found: ${typeof obj}`);
+    throw new Error(`Expected object, found: ${typeof obj} ${JSON.stringify(obj)}`);
   } else if (Array.isArray(obj)) {
     throw new Error(`Expected object, found array`);
   }
@@ -125,7 +125,7 @@ const obj = (obj: ExpressionValue) => {
 
 const iterable = (result: ExpressionValue) => {
   if (!Array.isArray(result) && typeof result !== "string") {
-    throw new Error(`Expected array or string, found: ${typeof result}`);
+    throw new Error(`Expected array or string, found: ${typeof result} ${JSON.stringify(result)}`);
   }
 
   return result;
@@ -133,7 +133,7 @@ const iterable = (result: ExpressionValue) => {
 
 const string = (result: ExpressionValue) => {
   if (typeof result !== "string") {
-    throw new Error(`Expected string, found: ${typeof result}`);
+    throw new Error(`Expected string, found: ${typeof result} ${JSON.stringify(result)}`);
   }
 
   return result;
@@ -141,7 +141,7 @@ const string = (result: ExpressionValue) => {
 
 const char = (result: ExpressionValue) => {
   if (typeof result !== "string" || result.length !== 1) {
-    throw new Error(`Expected char, found: ${typeof result}`);
+    throw new Error(`Expected char, found: ${typeof result} ${JSON.stringify(result)}`);
   }
 
   return result;
@@ -286,8 +286,10 @@ export const formula = function (
 
     DEC2BIN: (arg) => arg().toString(2),
     DEC2HEX: (arg) => arg().toString(16),
+    DEC2STR: (arg) => arg().toString(10),
     BIN2DEC: (arg) => Number.parseInt(string(arg()), 2),
     HEX2DEC: (arg) => Number.parseInt(string(arg()), 16),
+    STR2DEC: (arg) => Number.parseInt(string(arg()), 10),
     DEGREES: (arg) => (num(arg()) * 180) / Math.PI,
     RADIANS: (arg) => (num(arg()) * Math.PI) / 180,
 
@@ -628,6 +630,8 @@ export const formula = function (
             return Number.POSITIVE_INFINITY;
           case "EPSILON":
             return Number.EPSILON;
+          case "UNDEFINED":
+            return undefined
           default:
             return termDelegate(term);
         }
