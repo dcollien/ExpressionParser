@@ -8,33 +8,33 @@ const isInArray = <T>(array: T[], value: T) => {
   return false;
 };
 
-const mapValues = <A, B>(mapper: (val: A) => B) => (obj: {
-  [key: string]: A;
-}): { [key: string]: B } => {
-  const result: { [key: string]: B } = {};
-  Object.keys(obj).forEach((key) => {
-    result[key] = mapper(obj[key]);
-  });
+const mapValues =
+  <A, B>(mapper: (val: A) => B) =>
+  (obj: { [key: string]: A }): { [key: string]: B } => {
+    const result: { [key: string]: B } = {};
+    Object.keys(obj).forEach((key) => {
+      result[key] = mapper(obj[key]);
+    });
 
-  return result;
-};
+    return result;
+  };
 
-const convertKeys = <T>(converter: (key: string) => string) => (obj: {
-  [key: string]: T;
-}) => {
-  const newKeys = Object.keys(obj)
-    .map((key) => (obj.hasOwnProperty(key) ? [key, converter(key)] : null))
-    .filter((val) => val != null);
+const convertKeys =
+  <T>(converter: (key: string) => string) =>
+  (obj: { [key: string]: T }) => {
+    const newKeys = Object.keys(obj)
+      .map((key) => (obj.hasOwnProperty(key) ? [key, converter(key)] : null))
+      .filter((val) => val != null);
 
-  newKeys.forEach(([oldKey, newKey]) => {
-    if (oldKey !== newKey) {
-      obj[newKey] = obj[oldKey];
-      delete obj[oldKey];
-    }
-  });
+    newKeys.forEach(([oldKey, newKey]) => {
+      if (oldKey !== newKey) {
+        obj[newKey] = obj[oldKey];
+        delete obj[oldKey];
+      }
+    });
 
-  return obj;
-};
+    return obj;
+  };
 
 export interface ExpressionArray<T> extends Array<T> {
   isArgumentsArray?: boolean;
@@ -60,12 +60,22 @@ export type ExpressionValue =
   | ExpressionFunction;
 export type ExpressionThunk = () => ExpressionValue;
 export type TermDelegate = (term: string) => ExpressionValue;
-export type TermType = "number" | "boolean" | "string" | "function" | "array" | "object" | "unknown";
+export type TermType =
+  | "number"
+  | "boolean"
+  | "string"
+  | "function"
+  | "array"
+  | "object"
+  | "unknown";
 export type TermTyper = (term: string) => TermType;
 
 type Infixer<T> = (token: string, lhs: T, rhs: T) => T;
 type Prefixer<T> = (token: string, rhs: T) => T;
-type Terminator<T> = (token: string, terms?: Record<string, ExpressionValue>) => T;
+type Terminator<T> = (
+  token: string,
+  terms?: Record<string, ExpressionValue>
+) => T;
 
 const thunkEvaluator = (val: ExpressionValue) => evaluate(val);
 const objEvaluator = mapValues<ExpressionValue, ExpressionValue>(
@@ -88,8 +98,10 @@ const evaluate = (
   }
 };
 
-const thunk = (delegate: Delegate, ...args: ExpressionValue[]) => () =>
-  delegate(...args);
+const thunk =
+  (delegate: Delegate, ...args: ExpressionValue[]) =>
+  () =>
+    delegate(...args);
 
 export type PrefixOp = (expr: ExpressionThunk) => ExpressionValue;
 
@@ -111,7 +123,7 @@ export interface Description {
   fix: "infix" | "prefix" | "surround";
   sig: string[];
   text: string;
-};
+}
 
 export interface ExpressionParserOptions {
   AMBIGUOUS: {
@@ -551,14 +563,19 @@ class ExpressionParser {
             .replace(this.LIT_OPEN_REGEX, "")
             .replace(this.LIT_CLOSE_REGEX, "");
       } else {
-        return (terms && term in terms) ? (() => terms[term]) : thunk(this.options.termDelegate, term);
+        return terms && term in terms
+          ? () => terms[term]
+          : thunk(this.options.termDelegate, term);
       }
     };
 
     return this.evaluateRpn(stack, infixExpr, prefixExpr, termExpr, terms);
   }
 
-  rpnToValue(stack: string[], terms?: Record<string, ExpressionValue>): ExpressionValue {
+  rpnToValue(
+    stack: string[],
+    terms?: Record<string, ExpressionValue>
+  ): ExpressionValue {
     return evaluate(this.rpnToThunk(stack, terms));
   }
 
@@ -570,11 +587,17 @@ class ExpressionParser {
     return this.tokensToRpn(this.tokenize(expression));
   }
 
-  expressionToThunk(expression: string, terms?: Record<string, ExpressionValue>) {
+  expressionToThunk(
+    expression: string,
+    terms?: Record<string, ExpressionValue>
+  ) {
     return this.rpnToThunk(this.expressionToRpn(expression), terms);
   }
 
-  expressionToValue(expression: string, terms?: Record<string, ExpressionValue>) {
+  expressionToValue(
+    expression: string,
+    terms?: Record<string, ExpressionValue>
+  ) {
     return this.rpnToValue(this.expressionToRpn(expression), terms);
   }
 

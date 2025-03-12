@@ -1,5 +1,9 @@
 # Expression Parser
 
+A no-dependency, easy-to-extend interpreter for parsing and evaluating expressions.
+
+This project is just a single file, aiming to be easy to understand, extend, and build upon.
+
 ## Install
 
 `npm install expressionparser`
@@ -72,8 +76,8 @@ The latter language can be configured as follows:
     };
 
 and evaluated as:
-    const expr = 'pow(1 + 1 * 2 - (10 / 2) + sqrt(16), 2)'.toUpperCase();
-    const result = new ExpressionParser(arithmeticLanguage).evaluateExpression(expr);
+const expr = 'pow(1 + 1 \* 2 - (10 / 2) + sqrt(16), 2)'.toUpperCase();
+const result = new ExpressionParser(arithmeticLanguage).expressionToValue(expr);
 
 (which will result in 4)
 
