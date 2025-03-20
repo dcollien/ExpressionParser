@@ -67,7 +67,8 @@ The latter language can be configured as follows:
       PRECEDENCE: [['SQRT', 'POW'], ['*', '/'], ['+', '-'], [',']],
       GROUP_OPEN: '(',
       GROUP_CLOSE: ')',
-      SEPARATOR: ' ',
+      SEPARATORS: [','],
+      WHITESPACE_CHARS: [" "],
       SYMBOLS: ['(', ')', '+', '-', '*', '/', ','],
 
       termDelegate: function(term) {
