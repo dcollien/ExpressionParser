@@ -249,6 +249,18 @@ describe("More Functions", () => {
     expect(result).to.equal(10);
   });
 
+  // optional arguments
+  it("should result in 10", () => {
+    const result = calc("LENGTH(RANGE(10))");
+    expect(result).to.equal(10);
+  });
+
+  // different typed arguments
+  it("should result in 3", () => {
+    const result = calc("RANGE([1, 2, 3, 4])");
+    expect(result).to.equal(3);
+  });
+
   it("should result in 'A'", () => {
     const result = calc("CHAR(65)");
     expect(result).to.equal("A");

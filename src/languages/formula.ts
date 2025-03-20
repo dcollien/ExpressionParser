@@ -210,6 +210,8 @@ export const formula = function (
     "^": (a, b) => Math.pow(num(a()), num(b())),
   };
 
+  const unpackedPrefixOps = ["RANGE", "ARRAY"];
+
   const prefixOps: FunctionOps = {
     NEG: (arg) => -num(arg()),
     ADD: (a, b) => num(a()) + num(b()),
@@ -223,6 +225,29 @@ export const formula = function (
         if (val % i === 0) return false;
       }
       return val !== 1;
+    },
+    COMB: (n, k) => {
+      const nVal = num(n());
+      const kVal = num(k());
+      let result = 1;
+      for (let i = 1; i <= kVal; i++) {
+        result *= (nVal - kVal + i) / i;
+      }
+      return Math.round(result);
+    },
+    PERM: (n, k) => {
+      const nVal = num(n());
+      const kVal = num(k());
+      let result = 1;
+      for (let i = 1; i <= kVal; i++) {
+        result *= nVal - kVal + i;
+      }
+      return Math.round(result);
+    },
+    POW: (base, exponent) => {
+      const baseVal = num(base());
+      const expVal = num(exponent());
+      return Math.pow(baseVal, expVal);
     },
     GCD: (arg1, arg2) => {
       let a = num(arg1());
@@ -284,7 +309,7 @@ export const formula = function (
       }
     },
 
-    AVERAGE: (arg) => {
+    MEAN: (arg) => {
       const arr = evalArray(arg());
 
       const sum = arr.reduce(
@@ -293,6 +318,42 @@ export const formula = function (
       );
       return num(sum) / arr.length;
     },
+    MEDIAN: (arg) => {
+      const arr = evalArray(arg(), num).sort(
+        (a, b) => num(a) - num(b)
+      ) as number[];
+
+      const mid = Math.floor(arr.length / 2);
+
+      return arr.length % 2 !== 0 ? arr[mid] : (arr[mid - 1] + arr[mid]) / 2;
+    },
+    MODE: (arg) => {
+      const arr = evalArray(arg(), num).sort(
+        (a, b) => num(a) - num(b)
+      ) as number[];
+
+      const freq = arr.reduce((acc, val) => {
+        if (acc.has(val)) {
+          acc.set(val, acc.get(val) + 1);
+        } else {
+          acc.set(val, 1);
+        }
+        return acc;
+      }, new Map<number, number>());
+
+      // find the highest frequency
+      let maxFreq = 0;
+      let mode = arr[0];
+
+      freq.forEach((val, key) => {
+        if (val > maxFreq) {
+          maxFreq = val;
+          mode = key;
+        }
+      });
+
+      return mode;
+    },
 
     SUM: (arg) =>
       evalArray(arg(), num).reduce((prev: number, curr) => prev + num(curr), 0),
@@ -300,9 +361,11 @@ export const formula = function (
     CODE: (arg) => char(arg()).charCodeAt(0),
 
     DEC2BIN: (arg) => arg().toString(2),
+    DEC2OCT: (arg) => arg().toString(8),
     DEC2HEX: (arg) => arg().toString(16),
     DEC2STR: (arg) => arg().toString(10),
     BIN2DEC: (arg) => Number.parseInt(string(arg()), 2),
+    OCT2DEC: (arg) => Number.parseInt(string(arg()), 8),
     HEX2DEC: (arg) => Number.parseInt(string(arg()), 16),
     STR2DEC: (arg) => Number.parseInt(string(arg()), 10),
     DEGREES: (arg) => (num(arg()) * 180) / Math.PI,
@@ -368,14 +431,34 @@ export const formula = function (
         }
       }, start);
     },
-    RANGE: (arg1, arg2) => {
-      const start = num(arg1());
-      const limit = num(arg2());
-      const result = [];
-      for (let i = start; i < limit; i++) {
-        result.push(i);
+    RANGE: (args) => {
+      // evaluate arguments
+      const val = args();
+
+      if (isArgumentsArray(val)) {
+        const [arg1, arg2] = val;
+
+        // two argument range:
+        console.log(arg1, arg2);
+        const start = num(arg1());
+        const limit = num(arg2());
+        const result = [];
+        for (let i = start; i < limit; i++) {
+          result.push(i);
+        }
+        return result;
+      } else if (typeof val === "number") {
+        // single argument range:
+        const limit = num(val);
+        return Array.from(Array(limit).keys());
+      } else if (Array.isArray(val)) {
+        // array argument, statistical range
+        const values = evalArray(val, num) as number[];
+
+        const smallest = Math.min(...values);
+        const largest = Math.max(...values);
+        return largest - smallest;
       }
-      return result;
     },
     UPPER: (arg) => string(arg()).toUpperCase(),
     LOWER: (arg) => string(arg()).toLowerCase(),
@@ -556,10 +639,24 @@ export const formula = function (
     },
   };
 
+  // Aliases
+  prefixOps.AVERAGE = prefixOps.MEAN;
+  prefixOps.FIRST = prefixOps.HEAD;
+  prefixOps.BINDEC = prefixOps.BIN2DEC;
+  prefixOps.OCTDEC = prefixOps.OCT2DEC;
+  prefixOps.HEXDEC = prefixOps.HEX2DEC;
+  prefixOps.STRDEC = prefixOps.STR2DEC;
+  prefixOps.DECBIN = prefixOps.DEC2BIN;
+  prefixOps.DECOCT = prefixOps.DEC2OCT;
+  prefixOps.DECHEX = prefixOps.DEC2HEX;
+  prefixOps.DECSTR = prefixOps.DEC2STR;
+  prefixOps.DEG2RAD = prefixOps.RADIANS;
+  prefixOps.RAD2DEG = prefixOps.DEGREES;
+
   // Ensure arguments are unpacked accordingly
-  // Except for the ARRAY constructor
+  // Except for those already unpacked
   Object.keys(prefixOps).forEach((key) => {
-    if (key !== "ARRAY") {
+    if (!unpackedPrefixOps.includes(key)) {
       prefixOps[key] = unpackArgs(prefixOps[key]);
     }
   });
@@ -847,6 +944,24 @@ export const formula = function (
         text: "Returns TRUE if value is prime, FALSE otherwise.",
       },
       {
+        op: "COMB",
+        fix: "prefix",
+        sig: ["n: Number", "k: Number", "Number"],
+        text: "Returns the number of combinations of n items taken k at a time: COMB(n, k).",
+      },
+      {
+        op: "PERM",
+        fix: "prefix",
+        sig: ["n: Number", "k: Number", "Number"],
+        text: "Returns the number of permutations of n items taken k at a time: PERM(n, k).",
+      },
+      {
+        op: "POW",
+        fix: "prefix",
+        sig: ["base: Number", "exponent: Number", "Number"],
+        text: "Returns the result of raising the base to the exponent: POW(base, exponent).",
+      },
+      {
         op: "GCD",
         fix: "prefix",
         sig: ["a: Number", "b: Number", "Number"],
@@ -988,13 +1103,13 @@ export const formula = function (
         op: "DEGREES",
         fix: "prefix",
         sig: ["radians: Number", "Number"],
-        text: "Performs a conversion of radians to degrees: DEGREES(radians).",
+        text: "Performs a conversion of radians to degrees: DEGREES(radians). (equivalent to RAD2DEG)",
       },
       {
         op: "RADIANS",
         fix: "prefix",
         sig: ["degrees: Number", "Number"],
-        text: "Performs a conversion of radians to degrees: RADIANS(degrees).",
+        text: "Performs a conversion of radians to degrees: RADIANS(degrees). (equivalent to DEG2RAD)",
       },
       {
         op: "CEIL",
@@ -1042,7 +1157,25 @@ export const formula = function (
         op: "AVERAGE",
         fix: "prefix",
         sig: ["values: Array of Numbers", "Number"],
-        text: "Returns the average (mean) of an array of numbers. AVERAGE(array).",
+        text: "Returns the average (mean) of an array of numbers. AVERAGE(array). (equivalent to MEAN)",
+      },
+      {
+        op: "MEAN",
+        fix: "prefix",
+        sig: ["values: Array of Numbers", "Number"],
+        text: "Returns the mean (average) of an array of numbers. MEAN(array). (equivalent to AVERAGE)",
+      },
+      {
+        op: "MEDIAN",
+        fix: "prefix",
+        sig: ["values: Array of Numbers", "Number"],
+        text: "Returns the median of an array of numbers. MEDIAN(array).",
+      },
+      {
+        op: "MODE",
+        fix: "prefix",
+        sig: ["values: Array of Numbers", "Array"],
+        text: "Returns the mode of an array of numbers. MODE(array).",
       },
       {
         op: "SUM",
@@ -1183,6 +1316,18 @@ export const formula = function (
         text: "Creates an array of integers, incrementing from start (included) to the limit (excluded): RANGE(start, limit)",
       },
       {
+        op: "RANGE",
+        fix: "prefix",
+        sig: ["limit: Integer", "Array"],
+        text: "Creates an array of integers, incrementing from 0 (included) to the limit (excluded): RANGE(limit)",
+      },
+      {
+        op: "RANGE",
+        fix: "prefix",
+        sig: ["values: Array of Numbers", "Array"],
+        text: "Returns the statistical range of an array of numbers: RANGE(array)",
+      },
+      {
         op: "ZIP",
         fix: "prefix",
         sig: [
@@ -1226,7 +1371,7 @@ export const formula = function (
         op: "HEAD",
         fix: "prefix",
         sig: ["array: Array", "Value"],
-        text: "Retrieves the first element of an array: HEAD(array)",
+        text: "Retrieves the first element of an array: HEAD(array). (equivalent to FIRST)",
       },
       {
         op: "TAIL",
@@ -1238,7 +1383,7 @@ export const formula = function (
         op: "LAST",
         fix: "prefix",
         sig: ["array: Array", "Value"],
-        text: "Retrieves the last element of an array: HEAD(array)",
+        text: "Retrieves the last element of an array: LAST(array)",
       },
       {
         op: "CONS",

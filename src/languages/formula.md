@@ -150,6 +150,24 @@ Performs negation of the value: -value. Note: no space can be present before "va
 
 Returns TRUE if value is prime, FALSE otherwise.
 
+## COMB
+
+`COMB(n: Number, k: Number): Number`
+
+Returns the number of combinations of n items taken k at a time: COMB(n, k).
+
+## PERM
+
+`PERM(n: Number, k: Number): Number`
+
+Returns the number of permutations of n items taken k at a time: PERM(n, k).
+
+## POW
+
+`POW(base: Number, exponent: Number): Number`
+
+Returns the result of raising the base to the exponent: POW(base, exponent).
+
 ## GCD
 
 `GCD(a: Number, b: Number): Number`
@@ -292,13 +310,13 @@ Returns the hyperbolic tangent of the number: TANH(value).
 
 `DEGREES(radians: Number): Number`
 
-Performs a conversion of radians to degrees: DEGREES(radians).
+Performs a conversion of radians to degrees: DEGREES(radians). (equivalent to RAD2DEG)
 
 ## RADIANS
 
 `RADIANS(degrees: Number): Number`
 
-Performs a conversion of radians to degrees: RADIANS(degrees).
+Performs a conversion of radians to degrees: RADIANS(degrees). (equivalent to DEG2RAD)
 
 ## CEIL
 
@@ -346,7 +364,25 @@ Tests the condition and returns the "then" value if the condition is TRUE, other
 
 `AVERAGE(values: Array of Numbers): Number`
 
-Returns the average (mean) of an array of numbers. AVERAGE(array).
+Returns the average (mean) of an array of numbers. AVERAGE(array). (equivalent to MEAN)
+
+## MEAN
+
+`MEAN(values: Array of Numbers): Number`
+
+Returns the mean (average) of an array of numbers. MEAN(array). (equivalent to AVERAGE)
+
+## MEDIAN
+
+`MEDIAN(values: Array of Numbers): Number`
+
+Returns the median of an array of numbers. MEDIAN(array).
+
+## MODE
+
+`MODE(values: Array of Numbers): Array`
+
+Returns the mode of an array of numbers. MODE(array).
 
 ## SUM
 
@@ -486,6 +522,18 @@ Performs a reducer function on each pair of array elements, using "start" as its
 
 Creates an array of integers, incrementing from start (included) to the limit (excluded): RANGE(start, limit)
 
+## RANGE
+
+`RANGE(limit: Integer): Array`
+
+Creates an array of integers, incrementing from 0 (included) to the limit (excluded): RANGE(limit)
+
+## RANGE
+
+`RANGE(values: Array of Numbers): Array`
+
+Returns the statistical range of an array of numbers: RANGE(array)
+
 ## ZIP
 
 `ZIP(array1: Array, array2: Array): Array of [array1[i], array2[i]]`
@@ -526,7 +574,7 @@ Concatenates two arrays into one: CONCAT(array1, array2)
 
 `HEAD(array: Array): Value`
 
-Retrieves the first element of an array: HEAD(array)
+Retrieves the first element of an array: HEAD(array). (equivalent to FIRST)
 
 ## TAIL
 
@@ -538,7 +586,7 @@ Returns the array without the first element: TAIL(array)
 
 `LAST(array: Array): Value`
 
-Retrieves the last element of an array: HEAD(array)
+Retrieves the last element of an array: LAST(array)
 
 ## CONS
 
