@@ -103,8 +103,12 @@ This parser will also convert between an expression and a Reverse Polish Notatio
 
 ## Further configuration
 
-The SEPARATOR and SYMBOLS options are to assist the built-in tokeniser and expression string builder. By default terms used to define operators are words, separated by the SEPARATOR character. Those in the SYMBOLS list are not affected by the SEPARATOR.
+The SEPARATORS, WHITESPACE_CHARS, and SYMBOLS options are to assist the built-in tokeniser and expression string builder. By default terms used to define operators or terms are strings of characters separated by any member of WHITESPACE_CHARS. Characters in SYMBOLS will be collected as a separate category to any other characters.
 
-e.g. If '!' is in SYMBOLS, with space as the SEPARATOR, we can use "!A" instead of "! A"
+e.g. If '!' is in SYMBOLS, with ' ' in WHITESPACE_CHARS, we can use "!!A" instead of "!! A" to provide the tokenization of `["!!", "A"]`
+
+SEPARATORS are single-character symbols which are self-terminating (they stand on their own).
+
+e.g. If '!' is instead in SEPARATORS, "!!A" will be tokenized to: `["!", "!", "A"]`
 
 The termDelegate option is used to evaluate the terminal symbols in the parse tree (i.e. the values).

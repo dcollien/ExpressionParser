@@ -595,7 +595,6 @@ export const formula = function (
       ">",
       "=",
       "!",
-      ",",
       '"',
       "(",
       ")",
