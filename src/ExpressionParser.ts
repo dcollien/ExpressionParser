@@ -125,7 +125,7 @@ export interface Description {
   text: string;
 }
 
-export interface ExpressionParserOptions {
+interface ExpressionParserOptionsBase {
   AMBIGUOUS: {
     [op: string]: string;
   };
@@ -138,7 +138,6 @@ export interface ExpressionParserOptions {
   GROUP_CLOSE: string;
   SYMBOLS: string[];
   PRECEDENCE: string[][];
-  SEPARATOR: string;
   termDelegate: TermDelegate;
   termTyper?: TermTyper;
   SURROUNDING?: {
@@ -151,6 +150,30 @@ export interface ExpressionParserOptions {
   isCaseInsensitive?: boolean;
   descriptions?: Description[];
 }
+
+interface ExpressionParserOptionsLegacy extends ExpressionParserOptionsBase {
+  SEPARATOR: string;
+}
+interface ExpressionParserOptionsAmmended extends ExpressionParserOptionsBase {
+  SEPARATORS: string[];
+  WHITESPACE_CHARS: string[];
+}
+
+const isOptionsLegacy = (
+  options: any
+): options is ExpressionParserOptionsLegacy => {
+  return options.hasOwnProperty("SEPARATOR");
+};
+
+const isOptionsAmmended = (
+  options: any
+): options is ExpressionParserOptionsAmmended => {
+  return options.hasOwnProperty("SEPARATORS");
+};
+
+export type ExpressionParserOptions =
+  | ExpressionParserOptionsLegacy
+  | ExpressionParserOptionsAmmended;
 
 class ExpressionParser {
   options: ExpressionParserOptions;
@@ -276,6 +299,42 @@ class ExpressionParser {
     return i;
   }
 
+  isSeparator(char: string) {
+    const options = this.options;
+
+    let isSep = false;
+
+    if (this.isWhitespace(char)) {
+      isSep = true;
+    } else if (isOptionsAmmended(options)) {
+      isSep = options.SEPARATORS.includes(char);
+    }
+
+    return isSep;
+  }
+
+  isWhitespace(char: string) {
+    const options = this.options;
+
+    let isSpace = false;
+
+    if (isOptionsAmmended(options)) {
+      isSpace = options.WHITESPACE_CHARS.includes(char);
+    } else {
+      isSpace = char === options.SEPARATOR;
+    }
+
+    return isSpace;
+  }
+
+  defaultWhitespaceSeparator() {
+    if (isOptionsLegacy(this.options)) {
+      return this.options.SEPARATOR;
+    } else {
+      return this.options.WHITESPACE_CHARS[0];
+    }
+  }
+
   tokenize(expression: string) {
     let token = "";
 
@@ -337,9 +396,13 @@ class ExpressionParser {
         endWord(true);
       } else if (state.scanningLiteral) {
         token += currChar;
-      } else if (currChar === this.options.SEPARATOR) {
+      } else if (this.isSeparator(currChar)) {
         endWord(true);
         state.startedWithSep = true;
+
+        if (!this.isWhitespace(currChar)) {
+          tokens.push(currChar);
+        }
       } else if (
         currChar === this.options.GROUP_OPEN ||
         currChar === this.options.GROUP_CLOSE
@@ -516,13 +579,13 @@ class ExpressionParser {
     const infixExpr: Infixer<string> = (term, lhs, rhs) =>
       this.options.GROUP_OPEN +
       lhs +
-      this.options.SEPARATOR +
+      this.defaultWhitespaceSeparator() +
       term +
-      this.options.SEPARATOR +
+      this.defaultWhitespaceSeparator() +
       rhs +
       this.options.GROUP_CLOSE;
     const prefixExpr: Prefixer<string> = (term, rhs) =>
-      (this.isSymbol(term) ? term : term + this.options.SEPARATOR) +
+      (this.isSymbol(term) ? term : term + this.defaultWhitespaceSeparator()) +
       this.options.GROUP_OPEN +
       rhs +
       this.options.GROUP_CLOSE;

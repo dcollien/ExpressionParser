@@ -4,35 +4,39 @@ import { expect } from "chai";
 import { init, formula } from "../index";
 import { ExpressionValue } from "../ExpressionParser";
 
-const termVals: { [key:string]: number | ((...args: any) => any) } = {
-  'a': 12,
-  'b': 9,
-  'c': -3,
+const termVals: { [key: string]: number | ((...args: any) => any) } = {
+  a: 12,
+  b: 9,
+  c: -3,
   _TEST: 42,
-  'xadd': (a, b) => a + b,
-  'xneg': (x) => -x,
-  'isEven': (x) => x % 2 == 0,
+  xadd: (a, b) => a + b,
+  xneg: (x) => -x,
+  isEven: (x) => x % 2 == 0,
 };
 
 const termTypes: { [key: string]: "number" | "function" } = {
-  'xadd': "function",
-  'xneg': "function",
-  'isEven': "function"
+  xadd: "function",
+  xneg: "function",
+  isEven: "function",
 };
 
-const parser = init(formula, (term: string) => {
-  if (term in termVals) {
-    return termVals[term];
-  } else {
-    throw new Error(`Invalid term: ${term}`);
+const parser = init(
+  formula,
+  (term: string) => {
+    if (term in termVals) {
+      return termVals[term];
+    } else {
+      throw new Error(`Invalid term: ${term}`);
+    }
+  },
+  (term: string) => {
+    if (term in termTypes) {
+      return termTypes[term];
+    } else {
+      return "number";
+    }
   }
-}, (term: string) => {
-  if (term in termTypes) {
-    return termTypes[term];
-  } else {
-    return "number";
-  }
-});
+);
 
 const calc = (expression: string, terms?: Record<string, ExpressionValue>) => {
   return parser.expressionToValue(expression, terms);
@@ -60,7 +64,7 @@ describe("Quadratic Formula", () => {
   it("should result in -1", () => {
     const result = calc("(-b - sqrt(b^2 - 4 * a * c))/(2 * a)");
     expect(result).to.equal(-1);
-  })
+  });
 });
 
 describe("External Function", () => {
@@ -278,68 +282,74 @@ describe("More Functions", () => {
 
 describe("Array Functions", () => {
   it("should result in [[1, 2], [3, 4]]", () => {
-    const result = calc('ZIP([1, 3], [2, 4])');
-    expect(result).to.eql([[1, 2], [3, 4]]);
+    const result = calc("ZIP([1, 3], [2, 4])");
+    expect(result).to.eql([
+      [1, 2],
+      [3, 4],
+    ]);
   });
 
   it("should result in [1, 3], [2, 4]", () => {
-    const result = calc('UNZIP([[1, 2], [3, 4]])');
-    expect(result).to.eql([[1, 3], [2, 4]]);
+    const result = calc("UNZIP([[1, 2], [3, 4]])");
+    expect(result).to.eql([
+      [1, 3],
+      [2, 4],
+    ]);
   });
 
   it("should result in [42, 69]", () => {
-    const result = calc('TAKE(2, [42, 69, 54])');
+    const result = calc("TAKE(2, [42, 69, 54])");
     expect(result).to.eql([42, 69]);
   });
 
   it("should result in [69, 54]", () => {
-    const result = calc('DROP(2, [1, 42, 69, 54])');
+    const result = calc("DROP(2, [1, 42, 69, 54])");
     expect(result).to.eql([69, 54]);
   });
 
   it("should result in [42, 69]", () => {
-    const result = calc('SLICE(1, 3, [1, 42, 69, 54])');
+    const result = calc("SLICE(1, 3, [1, 42, 69, 54])");
     expect(result).to.eql([42, 69]);
   });
 
   it("should result in [42, 69, 54]", () => {
-    const result = calc('CONCAT([42, 69], [54])');
+    const result = calc("CONCAT([42, 69], [54])");
     expect(result).to.eql([42, 69, 54]);
   });
 
   it("should result in 42", () => {
-    const result = calc('HEAD([42, 69, 54])');
+    const result = calc("HEAD([42, 69, 54])");
     expect(result).to.equal(42);
   });
 
   it("should result in [69, 54]", () => {
-    const result = calc('TAIL([42, 69, 54])');
+    const result = calc("TAIL([42, 69, 54])");
     expect(result).to.eql([69, 54]);
   });
 
   it("should result in 54", () => {
-    const result = calc('LAST([42, 69, 54])');
+    const result = calc("LAST([42, 69, 54])");
     expect(result).to.equal(54);
   });
 
   it("should result in [2,3,4]", () => {
-    const result = calc('CONS(2, [3, 4])');
+    const result = calc("CONS(2, [3, 4])");
     expect(result).to.eql([2, 3, 4]);
   });
 
   it("should result in [2,4,6]", () => {
-    const result = calc('FILTER(isEven, [1,2,3,4,5,6])');
-    expect(result).to.eql([2,4,6]);
+    const result = calc("FILTER(isEven, [1,2,3,4,5,6])");
+    expect(result).to.eql([2, 4, 6]);
   });
 
   it("should result in [0,2,4]", () => {
-    const result = calc('TAKEWHILE(isEven, [0,2,4,5,6,7,8])');
-    expect(result).to.eql([0,2,4]);
+    const result = calc("TAKEWHILE(isEven, [0,2,4,5,6,7,8])");
+    expect(result).to.eql([0, 2, 4]);
   });
 
   it("should result in [5,6,7,8]", () => {
-    const result = calc('DROPWHILE(isEven, [0,2,4,5,6,7,8])');
-    expect(result).to.eql([5,6,7,8]);
+    const result = calc("DROPWHILE(isEven, [0,2,4,5,6,7,8])");
+    expect(result).to.eql([5, 6, 7, 8]);
   });
 });
 
@@ -359,7 +369,7 @@ describe("Dictionaries", () => {
     expect(result).to.equal(5);
   });
 
-  it("should result in [\"a\", \"b\"]", () => {
+  it('should result in ["a", "b"]', () => {
     const result = calc('KEYS(UNZIPDICT([["b", 1], ["a", 5]]))');
     expect(result).to.eql(["a", "b"]);
   });
@@ -587,5 +597,13 @@ describe("Exceptions", () => {
     expect(() => {
       calc('CODE("FOO")');
     }).to.throw("Expected char, found: string");
+  });
+});
+
+describe("Tokenization of adjacent symbols", () => {
+  it("should be the same", () => {
+    const a = parser.tokenize("RANGE(-5,-1)");
+    const b = parser.tokenize("RANGE(-5, -1)");
+    expect(a).to.eql(b);
   });
 });

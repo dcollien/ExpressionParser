@@ -582,7 +582,8 @@ export const formula = function (
     LITERAL_CLOSE: '"',
     GROUP_OPEN: "(",
     GROUP_CLOSE: ")",
-    SEPARATOR: " ",
+    SEPARATORS: [","],
+    WHITESPACE_CHARS: [" ", "\t", "\n", "\r"],
     SYMBOLS: [
       "^",
       "*",
