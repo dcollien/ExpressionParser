@@ -12,155 +12,22 @@ import {
   TermType,
 } from "../ExpressionParser";
 
+import {
+  array,
+  char,
+  evalArray,
+  evalBool,
+  evalString,
+  iterable,
+  num,
+  obj,
+  string,
+  unpackArgs,
+} from "../helpers";
+
 export interface FunctionOps {
   [op: string]: (...args: ExpressionThunk[]) => ExpressionValue;
 }
-
-const unpackArgs = (f: Delegate) => (expr: ExpressionThunk) => {
-  const result = expr();
-
-  if (!isArgumentsArray(result)) {
-    if (f.length > 1) {
-      throw new Error(
-        `Too few arguments. Expected ${f.length}, found 1 (${JSON.stringify(
-          result
-        )})`
-      );
-    }
-    return f(() => result);
-  } else if (result.length === f.length || f.length === 0) {
-    return f.apply(null, result);
-  } else {
-    throw new Error(`Incorrect number of arguments. Expected ${f.length}`);
-  }
-};
-
-const num = (result: ExpressionValue) => {
-  if (typeof result !== "number") {
-    throw new Error(
-      `Expected number, found: ${typeof result} ${JSON.stringify(result)}`
-    );
-  }
-
-  return result;
-};
-
-const array = (result: ExpressionValue) => {
-  if (!Array.isArray(result)) {
-    throw new Error(
-      `Expected array, found: ${typeof result} ${JSON.stringify(result)}`
-    );
-  }
-
-  if (isArgumentsArray(result)) {
-    throw new Error(`Expected array, found: arguments`);
-  }
-
-  return result;
-};
-
-const bool = (value: ExpressionValue) => {
-  if (typeof value !== "boolean") {
-    throw new Error(
-      `Expected boolean, found: ${typeof value} ${JSON.stringify(value)}`
-    );
-  }
-
-  return value;
-};
-
-const evalBool = (value: ExpressionValue): boolean => {
-  let result;
-
-  while (typeof value === "function" && value.length === 0) {
-    result = value();
-  }
-
-  if (!result) {
-    result = value;
-  }
-
-  return bool(result);
-};
-
-const evalString = (value: ExpressionValue) => {
-  let result;
-  if (typeof value === "function" && value.length === 0) {
-    result = value();
-  } else {
-    result = value;
-  }
-
-  return string(result);
-};
-
-const evalArray = (
-  arr: ExpressionValue,
-  typeCheck?: (value: ExpressionValue) => ExpressionValue
-) => {
-  return array(arr).map((value) => {
-    let result;
-    if (typeof value === "function" && value.length === 0) {
-      result = value();
-    } else {
-      result = value;
-    }
-
-    if (typeCheck) {
-      try {
-        result = typeCheck(result);
-      } catch (err) {
-        throw new Error(`In array; ${err.message}`);
-      }
-    }
-
-    return result;
-  });
-};
-
-const obj = (obj: ExpressionValue) => {
-  if (typeof obj !== "object" || obj === null) {
-    throw new Error(
-      `Expected object, found: ${typeof obj} ${JSON.stringify(obj)}`
-    );
-  } else if (Array.isArray(obj)) {
-    throw new Error(`Expected object, found array`);
-  }
-
-  return obj;
-};
-
-const iterable = (result: ExpressionValue) => {
-  if (!Array.isArray(result) && typeof result !== "string") {
-    throw new Error(
-      `Expected array or string, found: ${typeof result} ${JSON.stringify(
-        result
-      )}`
-    );
-  }
-
-  return result;
-};
-
-const string = (result: ExpressionValue) => {
-  if (typeof result !== "string") {
-    throw new Error(
-      `Expected string, found: ${typeof result} ${JSON.stringify(result)}`
-    );
-  }
-
-  return result;
-};
-
-const char = (result: ExpressionValue) => {
-  if (typeof result !== "string" || result.length !== 1) {
-    throw new Error(
-      `Expected char, found: ${typeof result} ${JSON.stringify(result)}`
-    );
-  }
-
-  return result;
-};
 
 type Callable = (...args: ExpressionArray<ExpressionThunk>) => ExpressionValue;
 

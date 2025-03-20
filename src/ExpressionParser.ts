@@ -109,6 +109,8 @@ export interface PrefixOps {
   [op: string]: PrefixOp;
 }
 
+export type PrefixOpLookupFn = (op: string) => PrefixOp | undefined;
+
 export type InfixOp = (
   a: ExpressionThunk,
   b: ExpressionThunk
@@ -117,6 +119,8 @@ export type InfixOp = (
 export interface InfixOps {
   [op: string]: InfixOp;
 }
+
+export type InfixOpLookupFn = (op: string) => InfixOp | undefined;
 
 export interface Description {
   op: string;
@@ -129,8 +133,8 @@ interface ExpressionParserOptionsBase {
   AMBIGUOUS: {
     [op: string]: string;
   };
-  PREFIX_OPS: PrefixOps;
-  INFIX_OPS: InfixOps;
+  PREFIX_OPS: PrefixOps | PrefixOpLookupFn;
+  INFIX_OPS: InfixOps | InfixOpLookupFn;
   ESCAPE_CHAR: string;
   LITERAL_OPEN: string;
   LITERAL_CLOSE: string;
@@ -222,8 +226,15 @@ class ExpressionParser {
       const upperCaser = (key: string) => key.toUpperCase();
       const upperCaseKeys = convertKeys(upperCaser);
       const upperCaseVals = mapValues(upperCaser);
-      upperCaseKeys(this.options.INFIX_OPS);
-      upperCaseKeys(this.options.PREFIX_OPS);
+
+      if (!(this.options.PREFIX_OPS instanceof Function)) {
+        upperCaseKeys(this.options.PREFIX_OPS);
+      }
+
+      if (!(this.options.INFIX_OPS instanceof Function)) {
+        upperCaseKeys(this.options.INFIX_OPS);
+      }
+
       upperCaseKeys(this.options.AMBIGUOUS);
       upperCaseVals(this.options.AMBIGUOUS);
       this.options.PRECEDENCE = this.options.PRECEDENCE.map((arr) =>
@@ -275,11 +286,20 @@ class ExpressionParser {
         }
       };
     }
-    return this.options.PREFIX_OPS[this.resolveCase(op)];
+
+    if (this.options.PREFIX_OPS instanceof Function) {
+      return this.options.PREFIX_OPS(op);
+    } else {
+      return this.options.PREFIX_OPS[this.resolveCase(op)];
+    }
   }
 
   getInfixOp(op: string) {
-    return this.options.INFIX_OPS[this.resolveCase(op)];
+    if (this.options.INFIX_OPS instanceof Function) {
+      return this.options.INFIX_OPS(op);
+    } else {
+      return this.options.INFIX_OPS[this.resolveCase(op)];
+    }
   }
 
   getPrecedence(op: string) {
