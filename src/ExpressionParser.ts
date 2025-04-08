@@ -19,6 +19,14 @@ const mapValues =
     return result;
   };
 
+const applyToValues =
+  <T>(delegate: (val: T) => T) =>
+  (obj: { [key: string]: T }) => {
+    Object.keys(obj).forEach((key) => {
+      obj[key] = delegate(obj[key]);
+    });
+  };
+
 const convertKeys =
   <T>(converter: (key: string) => string) =>
   (obj: { [key: string]: T }) => {
@@ -51,11 +59,14 @@ export const isArgumentsArray = (
 export type ValuePrimitive = number | boolean | string;
 export type Delegate = (...args: ExpressionValue[]) => ExpressionValue;
 export type ExpressionFunction = Delegate;
+export interface ExpressionObject {
+  [key: string]: ExpressionValue;
+}
 export type ExpressionValue =
   | ValuePrimitive
   | ArgumentsArray
   | ExpressionArray<ExpressionValue>
-  | { [key: string]: ExpressionValue }
+  | ExpressionObject
   | ExpressionThunk
   | ExpressionFunction;
 export type ExpressionThunk = () => ExpressionValue;
@@ -77,10 +88,30 @@ type Terminator<T> = (
   terms?: Record<string, ExpressionValue>
 ) => T;
 
+function isBasicDataObject(obj: any): obj is Record<string, ExpressionValue> {
+  if (obj === null || typeof obj !== "object") return false;
+
+  const proto = Object.getPrototypeOf(obj);
+
+  // If the prototype is not Object.prototype, it's not a plain object
+  if (proto !== Object.prototype) return false;
+
+  // Optional: check the prototype doesn't have custom methods
+  const methodNames = Object.getOwnPropertyNames(proto).filter(
+    (key) => typeof (proto as any)[key] === "function" && key !== "constructor"
+  );
+
+  return methodNames.length === 0;
+}
+
 const thunkEvaluator = (val: ExpressionValue) => evaluate(val);
 const objEvaluator = mapValues<ExpressionValue, ExpressionValue>(
   thunkEvaluator
 );
+const classObjEvaluator = (val: { [key: string]: ExpressionValue }) => {
+  applyToValues<ExpressionValue>(thunkEvaluator)(val);
+  return val;
+};
 
 const evaluate = (
   thunkExpression: ExpressionThunk | ExpressionValue
@@ -91,8 +122,10 @@ const evaluate = (
     return thunkExpression.map((val) => evaluate(val()));
   } else if (Array.isArray(thunkExpression)) {
     return thunkExpression.map(thunkEvaluator);
-  } else if (typeof thunkExpression === "object") {
+  } else if (isBasicDataObject(thunkExpression)) {
     return objEvaluator(thunkExpression);
+  } else if (typeof thunkExpression === "object") {
+    return classObjEvaluator(thunkExpression);
   } else {
     return thunkExpression;
   }

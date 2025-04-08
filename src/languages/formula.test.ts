@@ -2,16 +2,16 @@ import "mocha";
 import { expect } from "chai";
 
 import { init, formula } from "../index";
-import { ExpressionValue } from "../ExpressionParser";
+import { ExpressionValue, ExpressionObject } from "../ExpressionParser";
 
-const termVals: { [key: string]: number | ((...args: any) => any) } = {
+const termVals: { [key: string]: ExpressionValue } = {
   a: 12,
   b: 9,
   c: -3,
   _TEST: 42,
-  xadd: (a, b) => a + b,
-  xneg: (x) => -x,
-  isEven: (x) => x % 2 == 0,
+  xadd: (a: number, b: number) => a + b,
+  xneg: (x: number) => -x,
+  isEven: (x: number) => x % 2 == 0,
 };
 
 const termTypes: { [key: string]: "number" | "function" } = {
@@ -617,5 +617,31 @@ describe("Tokenization of adjacent symbols", () => {
     const a = parser.tokenize("RANGE(-5,-1)");
     const b = parser.tokenize("RANGE(-5, -1)");
     expect(a).to.eql(b);
+  });
+});
+
+interface Foo extends ExpressionObject {
+  x: number;
+  xSq: () => number;
+}
+
+describe("Evaluation of objects with prototypes", () => {
+  const ProtoObj: {
+    new (): Foo;
+  } = function (this: Foo) {
+    this.x = 42;
+  } as unknown as {
+    new (): Foo;
+  };
+
+  ProtoObj.prototype.xSq = function () {
+    return this.x * this.x;
+  };
+
+  termVals["foo"] = new ProtoObj();
+
+  it("should be the same object", () => {
+    const result = calc("foo");
+    expect(result).to.equal(termVals["foo"]);
   });
 });
